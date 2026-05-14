@@ -8,36 +8,40 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class Usuario {
-    private final Long id;
+public class Usuario extends ClienteBank {
+
     private String nomeCompleto;
-    private final String cpf;
+    private String cpf;
     private String email;
     private String senhaHash;
-    private final LocalDate dataNascimento;
+    private LocalDate dataNascimento;
 
     private ModoInterface modoInterface;
     private BigDecimal limiteOperacionalMensal;
     private boolean kycAprovado;
 
-    private final Carteira carteira;
-    private final List<ProgressoUsuarioAula> historicoAulas;
+    private List<ProgressoUsuarioAula> historicoAulas;
 
     public Usuario(Long id, String nomeCompleto, String cpf, String email, String senhaHash,
                    LocalDate dataNascimento, Carteira carteira) {
-        this.id = Objects.requireNonNull(id);
+        super(id, carteira);
+
         this.nomeCompleto = validarTexto(nomeCompleto, "Nome completo");
         this.cpf = validarCpf(cpf);
         this.email = validarEmail(email);
         this.senhaHash = Objects.requireNonNull(senhaHash);
 
         this.dataNascimento = validarMaioridade(dataNascimento);
-        this.carteira = Objects.requireNonNull(carteira);
 
         this.modoInterface = ModoInterface.INICIANTE;
         this.limiteOperacionalMensal = new BigDecimal("5000.00");
         this.kycAprovado = false;
         this.historicoAulas = new ArrayList<>();
+    }
+
+    @Override
+    public String getDocumentoIdentificacao() {
+        return this.cpf;
     }
 
     public void aprovarKyc(BigDecimal limiteInicial) {
@@ -106,15 +110,56 @@ public class Usuario {
         return texto.trim();
     }
 
-    public List<ProgressoUsuarioAula> getHistoricoAulas() { return Collections.unmodifiableList(historicoAulas); }
-    public Long getId() { return id; }
-    public String getCpf() { return cpf; }
-    public String getEmail() { return email; }
-    public Carteira getCarteira() { return carteira; }
-    public boolean isKycAprovado() { return kycAprovado; }
-    public BigDecimal getLimiteOperacionalMensal() { return limiteOperacionalMensal; }
-
     public enum ModoInterface {
         INICIANTE, AVANCADO
+    }
+
+    public String getNomeCompleto() { return nomeCompleto; }
+    public void setNomeCompleto(String nomeCompleto) {
+        this.nomeCompleto = validarTexto(nomeCompleto, "Nome completo");
+    }
+
+    public String getCpf() { return cpf; }
+    public void setCpf(String cpf) {
+        this.cpf = validarCpf(cpf);
+    }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) {
+        this.email = validarEmail(email);
+    }
+
+    public String getSenhaHash() { return senhaHash; }
+    public void setSenhaHash(String senhaHash) {
+        this.senhaHash = Objects.requireNonNull(senhaHash, "O hash da senha não pode ser nulo.");
+    }
+
+    public LocalDate getDataNascimento() { return dataNascimento; }
+    public void setDataNascimento(LocalDate dataNascimento) {
+        this.dataNascimento = validarMaioridade(dataNascimento);
+    }
+
+    public ModoInterface getModoInterface() { return modoInterface; }
+    public void setModoInterface(ModoInterface modoInterface) {
+        this.modoInterface = Objects.requireNonNull(modoInterface);
+    }
+
+    public BigDecimal getLimiteOperacionalMensal() { return limiteOperacionalMensal; }
+    public void setLimiteOperacionalMensal(BigDecimal limiteOperacionalMensal) {
+        if (limiteOperacionalMensal == null || limiteOperacionalMensal.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Integridade de dados: O limite não pode ser negativo.");
+        }
+        this.limiteOperacionalMensal = limiteOperacionalMensal;
+    }
+
+    public boolean isKycAprovado() { return kycAprovado; }
+    public void setKycAprovado(boolean kycAprovado) { this.kycAprovado = kycAprovado; }
+
+    public List<ProgressoUsuarioAula> getHistoricoAulas() {
+        return Collections.unmodifiableList(historicoAulas);
+    }
+    public void setHistoricoAulas(List<ProgressoUsuarioAula> historicoAulas) {
+        // Garante que a lista setada externamente possa receber novos itens futuramente (.add)
+        this.historicoAulas = new ArrayList<>(Objects.requireNonNull(historicoAulas));
     }
 }

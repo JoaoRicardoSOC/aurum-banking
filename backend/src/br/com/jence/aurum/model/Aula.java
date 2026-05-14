@@ -1,6 +1,9 @@
 package br.com.jence.aurum.model;
 
+import java.util.Objects;
+
 public class Aula {
+
     private Long id;
     private String titulo;
     private String conteudoHtml;
@@ -11,22 +14,20 @@ public class Aula {
     }
 
     public Aula(Long id, String titulo, String conteudoHtml, int ordem, int pontosXp) {
-        this.id = id;
-        this.titulo = titulo;
-        this.conteudoHtml = conteudoHtml;
-        this.ordem = ordem;
-        this.pontosXp = pontosXp;
+        this.id = Objects.requireNonNull(id, "O ID da aula é obrigatório.");
+        this.titulo = validarTexto(titulo, "Título");
+        this.conteudoHtml = validarTexto(conteudoHtml, "Conteúdo HTML");
+        this.ordem = validarNumeroPositivo(ordem, "Ordem da aula");
+        this.pontosXp = validarNumeroPositivo(pontosXp, "Pontos XP");
     }
 
     public void iniciarAula() {
         System.out.println("Iniciando a aula: " + this.titulo);
-
     }
 
     public int finalizarAula() {
         System.out.println("Aula '" + this.titulo + "' finalizada!");
         System.out.println("Você ganhou " + this.pontosXp + " XP.");
-
         return this.pontosXp;
     }
 
@@ -34,43 +35,40 @@ public class Aula {
         System.out.println("Aula " + this.ordem + ": " + this.titulo + " (" + this.pontosXp + " XP)");
     }
 
-    public Long getId() {
-        return id;
+    private String validarTexto(String texto, String campo) {
+        if (texto == null || texto.isBlank()) {
+            throw new IllegalArgumentException(campo + " não pode ser vazio.");
+        }
+        return texto.trim();
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    private int validarNumeroPositivo(int valor, String campo) {
+        if (valor <= 0) {
+            throw new IllegalArgumentException(campo + " deve ser estritamente maior que zero.");
+        }
+        return valor;
     }
 
-    public String getTitulo() {
-        return titulo;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = Objects.requireNonNull(id); }
 
+    public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) {
-        this.titulo = titulo;
+        this.titulo = validarTexto(titulo, "Título");
     }
 
-    public String getConteudoHtml() {
-        return conteudoHtml;
-    }
-
+    public String getConteudoHtml() { return conteudoHtml; }
     public void setConteudoHtml(String conteudoHtml) {
-        this.conteudoHtml = conteudoHtml;
+        this.conteudoHtml = validarTexto(conteudoHtml, "Conteúdo HTML");
     }
 
-    public int getOrdem() {
-        return ordem;
-    }
-
+    public int getOrdem() { return ordem; }
     public void setOrdem(int ordem) {
-        this.ordem = ordem;
+        this.ordem = validarNumeroPositivo(ordem, "Ordem da aula");
     }
 
-    public int getPontosXp() {
-        return pontosXp;
-    }
-
+    public int getPontosXp() { return pontosXp; }
     public void setPontosXp(int pontosXp) {
-        this.pontosXp = pontosXp;
+        this.pontosXp = validarNumeroPositivo(pontosXp, "Pontos XP");
     }
 }
