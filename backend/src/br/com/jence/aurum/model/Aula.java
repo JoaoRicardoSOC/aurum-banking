@@ -10,9 +10,6 @@ public class Aula {
     private int ordem;
     private int pontosXp;
 
-    public Aula() {
-    }
-
     public Aula(Long id, String titulo, String conteudoHtml, int ordem, int pontosXp) {
         this.id = Objects.requireNonNull(id, "O ID da aula é obrigatório.");
         this.titulo = validarTexto(titulo, "Título");
