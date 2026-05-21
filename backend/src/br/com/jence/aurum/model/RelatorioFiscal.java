@@ -25,7 +25,15 @@ public class RelatorioFiscal implements RegistroAuditavel {
     private Usuario solicitantePessoaFisica;
     private Empresa solicitantePessoaJuridica;
 
-    public RelatorioFiscal(Long id, LocalDate inicio, LocalDate fim, FormatoArquivo formato,
+    public RelatorioFiscal(Long id, LocalDate inicio, LocalDate fim, FormatoArquivo formato, Usuario pf) {
+        this(id, inicio, fim, formato, Objects.requireNonNull(pf, "Usuário não pode ser nulo"), null);
+    }
+
+    public RelatorioFiscal(Long id, LocalDate inicio, LocalDate fim, FormatoArquivo formato, Empresa pj) {
+        this(id, inicio, fim, formato, null, Objects.requireNonNull(pj, "Empresa não pode ser nula"));
+    }
+
+    private RelatorioFiscal(Long id, LocalDate inicio, LocalDate fim, FormatoArquivo formato,
                            Usuario pf, Empresa pj) {
         this.id = Objects.requireNonNull(id);
         this.dataSolicitacao = LocalDateTime.now();
