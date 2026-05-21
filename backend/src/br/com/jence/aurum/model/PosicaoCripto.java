@@ -28,4 +28,12 @@ public class PosicaoCripto {
     public Long getId() { return id; }
     public Criptoativo getMoeda() { return moeda; }
     public BigDecimal getQuantidadeTotal() { return quantidadeTotal; }
+
+    @Override
+    public String toString() {
+        return "PosicaoCripto{" +
+                "sigla='" + moeda.getSigla() + '\'' +
+                ", quantidade=" + quantidadeTotal +
+                '}';
+    }
 }
