@@ -27,21 +27,46 @@ public class Main {
         testarCriptoativo();
         testarAtualizacaoPrecoCripto();
 
+        System.out.println("\nTestando PosiçãoCripto:");
+        testarCriacaoPosicaoCriptoValida();
+        testarPosicaoAdicionar();
+        testarPosicaoSubtrair();
+        testarPosicaoSaldoNegativo();
+
         System.out.println("\nTestando Cofre:");
         testarCofreTemporal();
         testarResgateAntecipado();
 
+        System.out.println("\nTestando ItemCombo:");
+        testarCriacaoItemComboValido();
+        testarItemComboPercentualInvalido();
+
         System.out.println("\nTestando Combo:");
         testarComboValido();
+        testarComboIncompleto();
         testarComboInvalido();
 
         System.out.println("\nTestando Transação:");
         testarTransacaoConcluida();
         testarFalhaEmTransacaoConcluida();
 
+        System.out.println("\nTestando Empresa:");
+        testarCriacaoEmpresaValida();
+        testarEmpresaCNPJInvalido();
+        testarEmpresaSemUsuarioMaster();
+        testarAdicionarGuardiao();
+        testarGuardiaoDuplicado();
+        testarRegistrarRelatorio();
+        testarTransferenciaUsuarioMaster();
+        testarTransferenciaMasterEmpresaAtiva();
+
         System.out.println("\nTestando Solicitação:");
         testarSolicitacaoAprovada();
         testarVotoDuplicado();
+        testarSolicitacaoExpirada();
+
+        System.out.println("\nTestando Guardião:");
+        testarCriacaoGuardiaoValido();
 
         System.out.println("\nTestando Notificação:");
         testarNotificacao();
@@ -49,7 +74,21 @@ public class Main {
         System.out.println("\nTestando Relatório:");
         testarRelatorioFiscal();
 
+        System.out.println("\nTestando Aula:");
+        testarCriacaoAulaValida();
+        testarTituloVazio();
+        testarConteudoVazio();
+        testarOrdemNaoPositiva();
+        testarXPNaoPositivo();
+        testarRetornoDeXP();
 
+        System.out.println("\nTestando ProgressoUsuarioAula:");
+        testarCriacaoProgressoUsuarioAulaValido();
+        testarMarcarComoConcluidaEReverter();
+
+        System.out.println("\n=====================================================");
+        System.out.println("          TODOS OS TESTES FORAM CONCLUÍDOS          ");
+        System.out.println("=====================================================");
     }
 
     // TESTES UNITARIOS
@@ -235,6 +274,125 @@ public class Main {
         }
     }
 
+    // PosicaoCripto
+
+    private static void testarCriacaoPosicaoCriptoValida() {
+        System.out.println("\n--- testarCriacaoPosicaoCriptoValida ---");
+
+        try {
+            Criptoativo criptoativo = new Criptoativo(
+                    1L,
+                    "Aurum Coin",
+                    "AUC",
+                    new BigDecimal("10000")
+            );
+
+            PosicaoCripto posicao = new PosicaoCripto(
+                    1L,
+                    criptoativo,
+                    new BigDecimal("0.1")
+            );
+
+            System.out.println("[OK] PosiçãoCripto criada com sucesso");
+        } catch (Exception e) {
+            System.out.println("[FALHA] " + e.getMessage());
+        }
+    }
+
+    private static void testarPosicaoAdicionar() {
+        System.out.println("\n--- testarPosicaoAdicionar ---");
+
+        try {
+            Criptoativo criptoativo = new Criptoativo(
+                    1L,
+                    "Aurum Coin",
+                    "AUC",
+                    new BigDecimal("10000")
+            );
+
+            PosicaoCripto posicao = new PosicaoCripto(
+                    1L,
+                    criptoativo,
+                    new BigDecimal("0.1")
+            );
+
+            BigDecimal valor = new BigDecimal("0.1");
+
+            System.out.println("Quantidade Inicial: " + posicao.getQuantidadeTotal());
+
+            posicao.adicionarQuantidade(valor);
+
+            System.out.println("Quantidade Adicionada: " + valor);
+            System.out.println("Quantidade Total: " + posicao.getQuantidadeTotal());
+
+            System.out.println("[OK] Adição realizada com sucesso");
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] " + e.getMessage());
+        }
+    }
+
+    private static void testarPosicaoSubtrair() {
+        System.out.println("\n--- testarPosicaoSubtrair ---");
+
+        try {
+            Criptoativo criptoativo = new Criptoativo(
+                    1L,
+                    "Aurum Coin",
+                    "AUC",
+                    new BigDecimal("10000")
+            );
+
+            PosicaoCripto posicao = new PosicaoCripto(
+                    1L,
+                    criptoativo,
+                    new BigDecimal("0.1")
+            );
+
+            BigDecimal valor = new BigDecimal("0.05");
+
+            System.out.println("Quantidade Inicial: " + posicao.getQuantidadeTotal());
+
+            posicao.subtrairQuantidade(valor);
+
+            System.out.println("Quantidade Subtraída: " + valor);
+            System.out.println("Quantidade Total: " + posicao.getQuantidadeTotal());
+
+            System.out.println("[OK] Subtração realizada com sucesso");
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] " + e.getMessage());
+        }
+    }
+
+    private static void testarPosicaoSaldoNegativo() {
+        System.out.println("\n--- testarPosicaoSaldoNegativo ---");
+
+        try {
+            Criptoativo criptoativo = new Criptoativo(
+                    1L,
+                    "Aurum Coin",
+                    "AUC",
+                    new BigDecimal("10000")
+            );
+
+            PosicaoCripto posicao = new PosicaoCripto(
+                    1L,
+                    criptoativo,
+                    new BigDecimal("0.1")
+            );
+
+            BigDecimal valor = new BigDecimal("0.2");
+
+            posicao.subtrairQuantidade(valor);
+
+            System.out.println("[FALHA] Saldo negativo passou");
+
+        } catch (IllegalStateException e) {
+            System.out.println("[OK] " + e.getMessage());
+        }
+    }
+
     // Cofre
 
     private static void testarCofreTemporal() {
@@ -300,6 +458,56 @@ public class Main {
         }
     }
 
+    // ItemCombo
+
+    private static void testarCriacaoItemComboValido() {
+        System.out.println("\n--- testarCriacaoItemComboValido ---");
+
+        try {
+            Criptoativo criptoativo = new Criptoativo(
+                    1L,
+                    "Aurum Coin",
+                    "AUC",
+                    new BigDecimal("10000")
+            );
+
+            ItemCombo itemCombo = new ItemCombo(
+                    1L,
+                    criptoativo,
+                    new BigDecimal("15")
+            );
+
+            System.out.println("[OK] ItemCombo criado com sucesso");
+
+        } catch (Exception e) {
+            System.out.println("[FALHOU] - " + e.getMessage());
+        }
+    }
+
+    private static void testarItemComboPercentualInvalido() {
+        System.out.println("\n--- testarItemComboPercentualInvalido ---");
+
+        try {
+            Criptoativo criptoativo = new Criptoativo(
+                    1L,
+                    "Aurum Coin",
+                    "AUC",
+                    new BigDecimal("10000")
+            );
+
+            ItemCombo itemCombo = new ItemCombo(
+                    1L,
+                    criptoativo,
+                    new BigDecimal("110")
+            );
+
+            System.out.println("[FALHOU] Valor percentual inválido passou");
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("[OK] - " + e.getMessage());
+        }
+    }
+
     // Combo
 
     private static void testarComboValido() {
@@ -344,14 +552,14 @@ public class Main {
         }
     }
 
-    private static void testarComboInvalido() {
-        System.out.println("\n--- testarComboInvalido ---");
+    private static void testarComboIncompleto() {
+        System.out.println("\n--- testarComboIncompleto ---");
 
         try {
 
             ComboCriptoativos combo = new ComboCriptoativos(
                     1L,
-                    "Combo Inválido",
+                    "Combo Incompleto",
                     ComboCriptoativos.PerfilRisco.ALTO
             );
 
@@ -364,6 +572,48 @@ public class Main {
 
             combo.adicionarItem(
                     new ItemCombo(1L, btc, new BigDecimal("70"))
+            );
+
+            combo.setDisponivel(true);
+
+            System.out.println("[FALHA] Combo incompleto ativado");
+
+        } catch (IllegalStateException e) {
+            System.out.println("[OK] Combo incompleto bloqueado");
+        }
+    }
+
+    private static void testarComboInvalido() {
+        System.out.println("\n--- testarComboInvalido ---");
+
+        try {
+
+            ComboCriptoativos combo = new ComboCriptoativos(
+                    1L,
+                    "Combo Incompleto",
+                    ComboCriptoativos.PerfilRisco.ALTO
+            );
+
+            Criptoativo btc = new Criptoativo(
+                    1L,
+                    "Bitcoin",
+                    "BTC",
+                    new BigDecimal("100")
+            );
+
+            Criptoativo eth = new Criptoativo(
+                    2L,
+                    "Ethereum",
+                    "ETH",
+                    new BigDecimal("50")
+            );
+
+            combo.adicionarItem(
+                    new ItemCombo(1L, btc, new BigDecimal("70"))
+            );
+
+            combo.adicionarItem(
+                    new ItemCombo(1L, eth, new BigDecimal("40"))
             );
 
             combo.setDisponivel(true);
@@ -409,6 +659,262 @@ public class Main {
 
         } catch (IllegalStateException e) {
             System.out.println("[OK] Falha em transação concluída bloqueada");
+        }
+    }
+
+    // Empresa
+
+    private static void testarCriacaoEmpresaValida() {
+        System.out.println("\n--- testarCriacaoEmpresaValida ---");
+
+        try {
+
+            Usuario user = criarUsuarioBase();
+
+            Carteira carteiraEmpresa = new Carteira(
+                    1L,
+                    "0xEMPRESA"
+            );
+
+            Empresa empresa = new Empresa(
+                    1L,
+                    "Aurum Banking",
+                    "12345678901234",
+                    user,
+                    carteiraEmpresa
+            );
+
+            System.out.println("[OK] Empresa criada");
+
+            System.out.println("Razão Social: " + empresa.getRazaoSocial());
+            System.out.println("Empresa está ativa: " + empresa.isStatusAtivo());
+            System.out.println("Usuário Master: " + empresa.getUsuarioMaster());
+            System.out.println("Data de Cadastro: " + empresa.getDataCadastro());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] " + e.getMessage());
+        }
+    }
+
+    private static void testarEmpresaCNPJInvalido() {
+        System.out.println("\n--- testarEmpresaCNPJInvalido ---");
+
+        try {
+
+            Usuario user = criarUsuarioBase();
+
+            Carteira carteiraEmpresa = new Carteira(
+                    1L,
+                    "0xEMPRESA"
+            );
+
+            Empresa empresa = new Empresa(
+                    1L,
+                    "Aurum Banking",
+                    "1234567890123d",
+                    user,
+                    carteiraEmpresa
+            );
+
+            System.out.println("[FALHA] CNPJ inválido foi aceito");
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("[OK] CNPJ inválido bloqueado");
+        }
+    }
+
+    private static void testarEmpresaSemUsuarioMaster() {
+        System.out.println("\n--- testarEmpresaSemUsuarioMaster ---");
+
+        try {
+
+            Usuario user = null;
+
+            Carteira carteiraEmpresa = new Carteira(
+                    1L,
+                    "0xEMPRESA"
+            );
+
+            Empresa empresa = new Empresa(
+                    1L,
+                    "Aurum Banking",
+                    "1234567890123d",
+                    user,
+                    carteiraEmpresa
+            );
+
+            System.out.println("[FALHA] Empresa sem usuário master foi aceito");
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("[OK] Empresa sem usuário master bloqueado");
+        }
+    }
+
+    private static void testarAdicionarGuardiao() {
+        System.out.println("\n--- testarAdicionarGuardiao ---");
+
+        try {
+
+            Usuario user1 = criarUsuarioBase();
+
+            Carteira carteiraEmpresa = new Carteira(
+                    1L,
+                    "0xEMPRESA"
+            );
+
+            Empresa empresa = new Empresa(
+                    1L,
+                    "Aurum Banking",
+                    "12345678901234",
+                    user1,
+                    carteiraEmpresa
+            );
+
+            Guardiao g1 = new Guardiao(1L, user1, empresa);
+            Guardiao g2 = new Guardiao(2L, criarUsuarioBase2(), empresa);
+
+            empresa.adicionarGuardiao(g1);
+
+            System.out.println("[OK] Primeiro Guardião Adicionado: " + empresa.getConselhoGuardioes());
+
+            empresa.adicionarGuardiao(g2);
+
+            System.out.println("[OK] Segundo Guardião Adicionado: " + empresa.getConselhoGuardioes());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] " + e.getMessage());
+        }
+    }
+
+    private static void testarGuardiaoDuplicado() {
+        System.out.println("\n--- testarGuardiaoDuplicado ---");
+
+        try {
+
+            Usuario user1 = criarUsuarioBase();
+
+            Carteira carteiraEmpresa = new Carteira(
+                    1L,
+                    "0xEMPRESA"
+            );
+
+            Empresa empresa = new Empresa(
+                    1L,
+                    "Aurum Banking",
+                    "12345678901234",
+                    user1,
+                    carteiraEmpresa
+            );
+
+            Guardiao g1 = new Guardiao(1L, user1, empresa);
+
+            empresa.adicionarGuardiao(g1);
+            empresa.adicionarGuardiao(g1);
+
+            System.out.println("[FALHA] Guardião Duplicado foi aceito: " + empresa.getConselhoGuardioes());
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("[OK] Guardião Duplicado foi bloqueado");
+        }
+    }
+
+    private static void testarRegistrarRelatorio() {
+        System.out.println("\n--- testarRegistrarRelatorio ---");
+
+        try {
+
+            Usuario user = criarUsuarioBase();
+
+            Carteira carteiraEmpresa = new Carteira(
+                    1L,
+                    "0xEMPRESA"
+            );
+
+            Empresa empresa = new Empresa(
+                    1L,
+                    "Aurum Banking",
+                    "12345678901234",
+                    user,
+                    carteiraEmpresa
+            );
+
+            RelatorioFiscal relatorioFiscal = new RelatorioFiscal(
+                    1L,
+                    LocalDate.of(2025, 1, 1),
+                    LocalDate.of(2025, 12, 31),
+                    RelatorioFiscal.FormatoArquivo.PDF,
+                    empresa
+            );
+
+            empresa.registrarRelatorio(relatorioFiscal);
+
+            System.out.println("[OK] Relatório Fiscal registrado: " + empresa.getHistoricoRelatorios());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] Relatório Fiscal não registrado - " + e.getMessage());
+        }
+    }
+
+    public static void testarTransferenciaUsuarioMaster() {
+        System.out.println("\n--- testarTransferenciaUsuarioMaster ---");
+
+        try {
+            Usuario user1 = criarUsuarioBase();
+
+            Usuario user2 = criarUsuarioBase2();
+
+            Carteira carteiraEmpresa = new Carteira(
+                    1L,
+                    "0xEMPRESA"
+            );
+
+            Empresa empresa = new Empresa(
+                    1L,
+                    "Aurum Banking",
+                    "12345678901234",
+                    user1,
+                    carteiraEmpresa
+            );
+
+            empresa.suspenderEmpresa();
+
+            empresa.transferirMaster(user2);
+
+            System.out.println("[OK] Usuário Master Transferido com a Empresa Suspensa");
+
+            empresa.setStatusAtivo(true);
+        } catch (IllegalStateException e) {
+            System.out.println("[FALHA] Usuário Master não foi Transferido - " + e.getMessage());
+        }
+    }
+
+    public static void testarTransferenciaMasterEmpresaAtiva() {
+        System.out.println("\n--- testarTransferenciaMasterEmpresaAtiva ---");
+
+        try {
+            Usuario user1 = criarUsuarioBase();
+
+            Usuario user2 = criarUsuarioBase2();
+
+            Carteira carteiraEmpresa = new Carteira(
+                    1L,
+                    "0xEMPRESA"
+            );
+
+            Empresa empresa = new Empresa(
+                    1L,
+                    "Aurum Banking",
+                    "12345678901234",
+                    user1,
+                    carteiraEmpresa
+            );
+
+            empresa.transferirMaster(user2);
+
+            System.out.println("[FALHA] Usuário Master foi transferido com a empresa ativa");
+
+        } catch (IllegalStateException e) {
+            System.out.println("[OK] Usuário Master não foi transferido com a empresa ativa - " + e.getMessage());
         }
     }
 
@@ -486,6 +992,76 @@ public class Main {
         }
     }
 
+    private static void testarSolicitacaoExpirada() {
+        System.out.println("\n--- testarSolicitaocaoExpirada ---");
+
+        try {
+            Usuario master = criarUsuarioBase();
+
+            Empresa empresa = new Empresa(
+                    1L,
+                    "Aurum Corp",
+                    "12345678000199",
+                    master,
+                    master.getCarteira()
+            );
+
+            Guardiao g1 = new Guardiao(1L, criarUsuarioBase(), empresa);
+
+            SolicitacaoDeTransacao solicitacao = new SolicitacaoDeTransacao(
+                    1L,
+                    criarTransacaoBase(),
+                    1,
+                    LocalDateTime.now().minusDays(1)
+            );
+
+            g1.votar(solicitacao, true, "");
+
+            System.out.println("[FALHA] Solicitação expirada passou");
+
+        } catch (IllegalStateException e) {
+            System.out.println("[OK] - " + e.getMessage());
+        }
+    }
+
+    // Guardiao
+    private static void testarCriacaoGuardiaoValido() {
+        System.out.println("\n--- testarCriacaoGuardiaoValido ---");
+
+        try {
+
+            Usuario user = criarUsuarioBase();
+
+            Carteira carteiraEmpresa = new Carteira(
+                    1L,
+                    "0xEMPRESA"
+            );
+
+            Empresa empresa = new Empresa(
+                    1L,
+                    "Aurum Banking",
+                    "12345678901234",
+                    user,
+                    carteiraEmpresa
+            );
+
+            Guardiao guardiao = new Guardiao(
+                    1L,
+                    user,
+                    empresa
+            );
+
+            System.out.println("[OK] Guardião criado");
+
+            System.out.println("Usuário Responsavel: " + guardiao.getUsuarioResponsavel());
+            System.out.println("Empresa Protegida: " + guardiao.getEmpresaProtegida());
+            System.out.println("Data de Nomeação: " + guardiao.getDataNomeacao());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] " + e.getMessage());
+        }
+    }
+
     // Notificacao
 
     private static void testarNotificacao() {
@@ -528,8 +1104,7 @@ public class Main {
                             LocalDate.of(2025, 1, 1),
                             LocalDate.of(2025, 12, 31),
                             RelatorioFiscal.FormatoArquivo.PDF,
-                            user,
-                            null
+                            user
                     );
 
             relatorio.finalizarProcessamento(
@@ -543,6 +1118,193 @@ public class Main {
 
             System.out.println("[OK] Relatório processado");
             System.out.println("Status: " + relatorio.getStatus());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] " + e.getMessage());
+        }
+    }
+
+    // Aula
+
+    private static void testarCriacaoAulaValida() {
+        System.out.println("\n--- testarCriacaoAulaValida ---");
+
+        try {
+            Aula aula = new Aula(
+                    1L,
+                    "Como investir em criptoativos",
+                    "Conteúdo da aula",
+                    3,
+                    10
+            );
+
+            System.out.println("[OK] Aula criada com sucesso");
+
+            System.out.println(aula.getTitulo());
+            System.out.println(aula.getConteudoHtml());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] " + e.getMessage());
+        }
+    }
+
+    private static void testarTituloVazio() {
+        System.out.println("\n--- testarTituloVazio ---");
+
+        try {
+            Aula aula = new Aula(
+                    1L,
+                    "",
+                    "Conteúdo da aula",
+                    3,
+                    10
+            );
+
+            System.out.println("[FALHA] Aula criada com título vazio");
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("[OK] " + e.getMessage());
+        }
+    }
+
+    private static void testarConteudoVazio() {
+        System.out.println("\n--- testarConteudoVazio ---");
+
+        try {
+            Aula aula = new Aula(
+                    1L,
+                    "Como investir em criptoativos",
+                    "",
+                    3,
+                    10
+            );
+
+            System.out.println("[FALHA] Aula criada com conteúdo vazio");
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("[OK] " + e.getMessage());
+        }
+    }
+
+    private static void testarOrdemNaoPositiva() {
+        System.out.println("\n--- testarOrdemNaoPositiva ---");
+
+        try {
+            Aula aula = new Aula(
+                    1L,
+                    "Como investir em criptoativos",
+                    "Conteúdo da aula",
+                    0,
+                    10
+            );
+
+            System.out.println("[FALHA] Aula criada com ordem não positiva");
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("[OK] " + e.getMessage());
+        }
+    }
+
+    private static void testarXPNaoPositivo() {
+        System.out.println("\n--- testarXPNaoPositivo ---");
+
+        try {
+            Aula aula = new Aula(
+                    1L,
+                    "Como investir em criptoativos",
+                    "Conteúdo da aula",
+                    3,
+                    0
+            );
+
+            System.out.println("[FALHA] Aula criada com pontos de XP não positivo");
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("[OK] " + e.getMessage());
+        }
+    }
+
+    private static void testarRetornoDeXP() {
+        System.out.println("\n--- testarRetornoDeXP ---");
+
+        Aula aula = new Aula(
+                1L,
+                "Como investir em criptoativos",
+                "Conteúdo da aula",
+                3,
+                10
+        );
+
+        System.out.println("Pontos esperados: " + aula.getPontosXp());
+        System.out.println("Pontos recebidos: " + aula.finalizarAula());
+    }
+
+    // ProgressoUsuarioAula
+
+    private static void testarCriacaoProgressoUsuarioAulaValido() {
+        System.out.println("\n--- testarCriacaoProgressoUsuarioAulaValido ---");
+
+        try {
+            Usuario usuario = criarUsuarioBase();
+
+            Aula aula = new Aula(
+                    1L,
+                    "Como investir em criptoativos",
+                    "Conteúdo da aula",
+                    3,
+                    10
+            );
+
+            ProgressoUsuarioAula progresso = new ProgressoUsuarioAula(
+                    1L,
+                    usuario,
+                    aula
+            );
+
+            System.out.println("[OK] ProgressoUsuarioAula criado com sucesso");
+
+
+            System.out.println("Aluno: " + progresso.getAluno());
+            System.out.println("Aula Assistida: " + progresso.getAulaAssistida());
+            System.out.println("Concluída: " + progresso.isConcluida());
+            System.out.println("Data de Conclusão: " + progresso.getDataConclusao());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] " + e.getMessage());
+        }
+    }
+
+    private static void testarMarcarComoConcluidaEReverter() {
+        System.out.println("\n--- testarMarcarComoConcluidaEReverter ---");
+
+        try {
+            Usuario usuario = criarUsuarioBase();
+
+            Aula aula = new Aula(
+                    1L,
+                    "Como investir em criptoativos",
+                    "Conteúdo da aula",
+                    3,
+                    10
+            );
+
+            ProgressoUsuarioAula progresso = new ProgressoUsuarioAula(
+                    1L,
+                    usuario,
+                    aula
+            );
+
+            progresso.marcarComoConcluida();
+
+            System.out.println("Concluída: " + progresso.isConcluida());
+            System.out.println("Data de Conclusão: " + progresso.getDataConclusao());
+
+            progresso.reverterConclusao();
+
+            System.out.println("Concluída: " + progresso.isConcluida());
+            System.out.println("Data de Conclusão: " + progresso.getDataConclusao());
+
+            System.out.println("[OK] Progresso marcado como concluído e revertido");
 
         } catch (Exception e) {
             System.out.println("[FALHA] " + e.getMessage());
