@@ -3,6 +3,8 @@ import br.com.jence.aurum.model.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -85,6 +87,12 @@ public class Main {
         System.out.println("\nTestando ProgressoUsuarioAula:");
         testarCriacaoProgressoUsuarioAulaValido();
         testarMarcarComoConcluidaEReverter();
+
+        System.out.println("\n======================================================\n");
+        System.out.println("Começando Testes de Fluxo");
+
+        testarCompraDeCripto();
+        testarVendaDeCripto();
 
         System.out.println("\n=====================================================");
         System.out.println("          TODOS OS TESTES FORAM CONCLUÍDOS          ");
@@ -1375,4 +1383,74 @@ public class Main {
                 btc
         );
     }
+
+
+    // TESTES DE FLUXO
+
+    private static void testarCompraDeCripto() {
+        System.out.println("\n--- testarCompraDeCripto ---");
+
+        try {
+            Usuario usuario = criarUsuarioBase();
+
+            Criptoativo criptoativo = new Criptoativo(
+                    1L,
+                    "Aurum Coin",
+                    "AUC",
+                    new BigDecimal("10000")
+            );
+
+            usuario.aprovarKyc(new BigDecimal("7500"));
+
+            usuario.getCarteira().depositarBrl(new BigDecimal("1000"));
+
+            TransacaoService service = new TransacaoService();
+
+            service.realizarCompra(usuario.getCarteira(), criptoativo, new BigDecimal("500"));
+
+            System.out.println("[OK] - Compra concluída com sucesso.");
+            System.out.println("Posição Cripto: " + usuario.getCarteira().getAtivosAdquiridos());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] - " + e.getMessage());
+        }
+    }
+
+    private static void testarVendaDeCripto() {
+        System.out.println("\n--- testarVendaDeCripto ---");
+
+        try {
+            Usuario usuario = criarUsuarioBase();
+
+            Criptoativo criptoativo = new Criptoativo(
+                    1L,
+                    "Aurum Coin",
+                    "AUC",
+                    new BigDecimal("10000")
+            );
+
+            PosicaoCripto posicaoCripto = new PosicaoCripto(
+                    1L,
+                    criptoativo,
+                    new BigDecimal("0.1")
+            );
+
+            List<PosicaoCripto> ativosAdiquiridos = new ArrayList<>();
+            ativosAdiquiridos.add(posicaoCripto);
+
+            usuario.getCarteira().setAtivosAdquiridos(ativosAdiquiridos);
+
+            TransacaoService service = new TransacaoService();
+
+            service.realizarVenda(usuario.getCarteira(), criptoativo, new BigDecimal("500"));
+
+            System.out.println("[OK] - Venda concluída com sucesso.");
+            System.out.println("Saldo disponível: " + usuario.getCarteira().getSaldoDisponivelBrl());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] - " + e.getMessage());
+        }
+    }
+
+
 }
