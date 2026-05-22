@@ -94,6 +94,9 @@ public class Main {
 
         testarCompraDeCripto();
         testarVendaDeCripto();
+        testarCompraDeComboCriptoativos();
+        testarMultiSignatureCorporativo();
+        testarGamificacaoEducacional();
 
         System.out.println("\n=====================================================");
         System.out.println("          TODOS OS TESTES FORAM CONCLUÍDOS          ");
@@ -1447,6 +1450,135 @@ public class Main {
 
             System.out.println("[OK] - Venda concluída com sucesso.");
             System.out.println("Saldo disponível: " + usuario.getCarteira().getSaldoDisponivelBrl());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] - " + e.getMessage());
+        }
+    }
+
+    private static void testarCompraDeComboCriptoativos() {
+        System.out.println("\n--- testarCompraDeComboCriptoativos ---");
+
+        try {
+            Usuario usuario = criarUsuarioBase();
+
+            ItemCombo itemCombo1 = new ItemCombo(
+                    1L,
+                    new Criptoativo(1L, "Bitcoin", "BTC", new BigDecimal("100000")),
+                    new BigDecimal("70")
+            );
+
+            ItemCombo itemCombo2 = new ItemCombo(
+                    2L,
+                    new Criptoativo(2L, "Ethereum", "ETH", new BigDecimal("50000")),
+                    new BigDecimal("30")
+            );
+
+            ComboCriptoativos comboCriptoativos = new ComboCriptoativos(
+                    1L,
+                    "Combo Teste",
+                    ComboCriptoativos.PerfilRisco.ALTO
+            );
+
+            comboCriptoativos.adicionarItem(itemCombo1);
+
+            comboCriptoativos.adicionarItem(itemCombo2);
+
+            usuario.getCarteira().depositarBrl(new BigDecimal("1000"));
+
+            TransacaoService service = new TransacaoService();
+
+            service.realizarCompraCombo(usuario.getCarteira(), comboCriptoativos, new BigDecimal("1000"));
+
+            System.out.println("[OK] - Compra de Combo concluída com sucesso.");
+            System.out.println("Posição Cripto: " + usuario.getCarteira().getAtivosAdquiridos());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] - " + e.getMessage());
+        }
+    }
+
+    private static void testarMultiSignatureCorporativo() {
+        System.out.println("\n--- testarMultiSignatureCorporativo ---");
+
+        try {
+            TransacaoService transacaoService = new TransacaoService();
+
+            Usuario usuarioMaster = criarUsuarioBase();
+
+            Carteira carteira = new Carteira(
+                    1L,
+                    "0x1234"
+            );
+
+            Empresa empresa = new Empresa(
+                    1L,
+                    "Aurum Bank",
+                    "12345678901234",
+                    usuarioMaster,
+                    carteira
+            );
+
+            carteira.depositarBrl(new BigDecimal("1000"));
+
+            Guardiao g1 = new Guardiao(1L, usuarioMaster, empresa);
+            Guardiao g2 = new Guardiao(1L, criarUsuarioBase2(), empresa);
+
+            Criptoativo criptoativo = new Criptoativo(1L, "Aurum Coin", "AUC", new BigDecimal("10000"));
+
+            SolicitacaoDeTransacao solicitacao = new SolicitacaoDeTransacao(
+                    1L,
+                    criarTransacaoBase(),
+                    2,
+                    LocalDateTime.now().plusDays(1)
+            );
+
+            solicitacao.registrarVoto(g1, true, "");
+            solicitacao.registrarVoto(g2, true, "");
+
+            if (solicitacao.getStatus() == SolicitacaoDeTransacao.StatusSolicitacao.APROVADA) {
+                transacaoService.realizarCompra(
+                        empresa.getCarteira(),
+                        solicitacao.getTransacaoPendente().getMoedaEnvolvida(),
+                        solicitacao.getTransacaoPendente().getValorMovimentadoBrl()
+                );
+            }
+
+            System.out.println("[OK] - Solicitação de compra concluída com sucesso.");
+            System.out.println("Posição Cripto: " + empresa.getCarteira().getAtivosAdquiridos());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] - " + e.getMessage());
+        }
+    }
+
+    private static void testarGamificacaoEducacional() {
+        System.out.println("\n--- testarGamificacaoEducacional ---");
+
+        try {
+            Usuario usuario = criarUsuarioBase();
+
+            Aula aula = new Aula(
+                    1L,
+                    "Como investir em criptoativos",
+                    "conteudo da aula",
+                    1,
+                    10
+            );
+
+            ProgressoUsuarioAula progresso = new ProgressoUsuarioAula(
+                    1L,
+                    usuario,
+                    aula
+            );
+
+            aula.iniciarAula();
+
+            aula.finalizarAula();
+            progresso.marcarComoConcluida();
+
+            System.out.println("[OK] - Aula concluída com sucesso.");
+            System.out.println("Data de Conclusão: " + progresso.getDataConclusao());
 
         } catch (Exception e) {
             System.out.println("[FALHA] - " + e.getMessage());
