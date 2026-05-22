@@ -1,11 +1,11 @@
 package br.com.jence.aurum.service;
 
-import br.com.jence.aurum.model.Carteira;
-import br.com.jence.aurum.model.Criptoativo;
-import br.com.jence.aurum.model.Transacao;
+import br.com.jence.aurum.model.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TransacaoService {
 
@@ -73,5 +73,34 @@ public class TransacaoService {
         carteira.registrarTransacao(transacao);
 
         return transacao;
+    }
+
+    public List<Transacao> realizarCompraCombo(Carteira carteira, ComboCriptoativos comboCriptoativos, BigDecimal valorBrl) {
+
+        if (!comboCriptoativos.isDisponivel()) {
+            throw new IllegalStateException("Combo indisponível");
+        }
+
+        if (carteira.getSaldoDisponivelBrl().compareTo(valorBrl) < 0) {
+            throw new IllegalStateException("Saldo insuficiente");
+        }
+
+        List<Transacao> transacaoList = new ArrayList<>();
+
+        for (ItemCombo item : comboCriptoativos.getComposicao()) {
+            BigDecimal percentual = item.getPercentual();
+
+            BigDecimal valorItem = valorBrl
+                    .multiply(percentual)
+                    .divide(
+                            new BigDecimal("100"),
+                            8,
+                            RoundingMode.HALF_UP
+                    );
+
+            transacaoList.add(realizarCompra(carteira, item.getMoeda(), valorItem));
+        }
+
+        return  transacaoList;
     }
 }
