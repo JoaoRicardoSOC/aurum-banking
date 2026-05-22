@@ -1,4 +1,5 @@
 import br.com.jence.aurum.model.*;
+import br.com.jence.aurum.service.TransacaoService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -1451,6 +1452,4 @@ public class Main {
             System.out.println("[FALHA] - " + e.getMessage());
         }
     }
-
-
 }

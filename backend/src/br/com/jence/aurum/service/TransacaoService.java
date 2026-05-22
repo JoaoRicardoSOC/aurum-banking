@@ -1,4 +1,8 @@
-package br.com.jence.aurum.model;
+package br.com.jence.aurum.service;
+
+import br.com.jence.aurum.model.Carteira;
+import br.com.jence.aurum.model.Criptoativo;
+import br.com.jence.aurum.model.Transacao;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
