@@ -1,11 +1,16 @@
 import br.com.jence.aurum.model.*;
 import br.com.jence.aurum.service.TransacaoService;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Main {
     public static void main(String[] args) {
@@ -97,6 +102,11 @@ public class Main {
         testarCompraDeComboCriptoativos();
         testarMultiSignatureCorporativo();
         testarGamificacaoEducacional();
+
+        System.out.println("\n======================================================\n");
+        System.out.println("Começando Testes de Coleções e Arquivos");
+
+        testarUsoDeColecoesEArquivos();
 
         System.out.println("\n=====================================================");
         System.out.println("          TODOS OS TESTES FORAM CONCLUÍDOS          ");
@@ -1579,6 +1589,54 @@ public class Main {
 
             System.out.println("[OK] - Aula concluída com sucesso.");
             System.out.println("Data de Conclusão: " + progresso.getDataConclusao());
+
+        } catch (Exception e) {
+            System.out.println("[FALHA] - " + e.getMessage());
+        }
+    }
+
+    // COLEÇÕES E ARQUIVOS
+
+    private static void testarUsoDeColecoesEArquivos() {
+        System.out.println("\n--- testarUsoDeColecoesEArquivos ---");
+
+        try {
+            // Testando o uso de ArrayList com as classes Usuario e Criptoativo
+            List<Usuario> listaUsuarios = new ArrayList<>();
+            listaUsuarios.add(criarUsuarioBase());
+            listaUsuarios.add(criarUsuarioBase2());
+
+            List<Criptoativo> listaCriptos = new ArrayList<>();
+            listaCriptos.add(new Criptoativo(1L, "Bitcoin", "BTC", new BigDecimal("350000")));
+            listaCriptos.add(new Criptoativo(2L, "Ethereum", "ETH", new BigDecimal("15000")));
+
+            // Testando o uso de HashMap com as classes Usuario e Criptoativo
+            Map<String, Usuario> mapaUsuarios = new HashMap<>();
+            for (Usuario u : listaUsuarios) {
+                mapaUsuarios.put(u.getCpf(), u);
+            }
+
+            Map<String, Criptoativo> mapaCriptos = new HashMap<>();
+            for (Criptoativo c : listaCriptos) {
+                mapaCriptos.put(c.getSigla(), c);
+            }
+
+            // Exportando os dados das colecoes para um arquivo de texto
+            String caminhoArquivo = "dados_exportados.txt";
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(caminhoArquivo))) {
+                writer.write("--- Relatorio de Usuarios ---\n");
+                for (Usuario u : mapaUsuarios.values()) {
+                    writer.write("ID: " + u.getId() + ", Nome: " + u.getNomeCompleto() + ", CPF: " + u.getCpf() + ", E-mail: " + u.getEmail() + "\n");
+                }
+                
+                writer.write("\n--- Relatorio de Criptoativos ---\n");
+                for (Criptoativo c : mapaCriptos.values()) {
+                    writer.write("ID: " + c.getId() + ", Nome: " + c.getNome() + ", Sigla: " + c.getSigla() + ", Preco Atual: R$ " + c.getPrecoAtualBrl() + "\n");
+                }
+                System.out.println("[OK] Dados exportados com sucesso para o arquivo: " + caminhoArquivo);
+            } catch (IOException e) {
+                System.out.println("[FALHA] Erro ao escrever no arquivo: " + e.getMessage());
+            }
 
         } catch (Exception e) {
             System.out.println("[FALHA] - " + e.getMessage());
