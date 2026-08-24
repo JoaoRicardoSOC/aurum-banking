@@ -1,5 +1,8 @@
 import br.com.jence.aurum.model.*;
 import br.com.jence.aurum.service.TransacaoService;
+import br.com.jence.aurum.dao.UsuarioDao;
+import br.com.jence.aurum.dao.CarteiraDao;
+import br.com.jence.aurum.factory.ConnectionFactory;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -107,6 +110,11 @@ public class Main {
         System.out.println("Começando Testes de Coleções e Arquivos");
 
         testarUsoDeColecoesEArquivos();
+
+        System.out.println("\n======================================================\n");
+        System.out.println("Começando Testes de Integração com Banco de Dados (JDBC / DAO)");
+
+        testarIntegracaoDatabaseJdbc();
 
         System.out.println("\n=====================================================");
         System.out.println("          TODOS OS TESTES FORAM CONCLUÍDOS          ");
@@ -1640,6 +1648,98 @@ public class Main {
 
         } catch (Exception e) {
             System.out.println("[FALHA] - " + e.getMessage());
+        }
+    }
+
+    // =========================================================================
+    // TESTES DE INTEGRAÇÃO JDBC / DAO (ETAPA 4 - CRUD USUARIO)
+    // =========================================================================
+
+    private static void testarIntegracaoDatabaseJdbc() {
+        System.out.println("\n--- testarIntegracaoDatabaseJdbc (CRUD Usuario via UsuarioDao) ---");
+
+        UsuarioDao usuarioDao = new UsuarioDao();
+        CarteiraDao carteiraDao = new CarteiraDao();
+
+        try {
+            System.out.println("\n1. [DML INSERT] Instanciando novo Usuario e chamando UsuarioDao.inserir()...");
+            
+            // Cria e persiste a carteira vinculada
+            String enderecoCarteira = "0xTEST_" + System.currentTimeMillis();
+            Carteira carteira = new Carteira(System.currentTimeMillis(), enderecoCarteira);
+            carteira.depositarBrl(new BigDecimal("2500.00"));
+            carteiraDao.inserir(carteira);
+            System.out.println("   -> Carteira persistida com sucesso! ID: " + carteira.getId() + " | Endereço: " + carteira.getEnderecoDigital());
+
+            // Cria o usuário
+            String cpfTeste = String.format("%011d", (long) (Math.random() * 100000000000L));
+            String emailTeste = "usuario.teste." + System.currentTimeMillis() + "@aurumbank.com";
+            Usuario novoUsuario = new Usuario(
+                    0L,
+                    "Lucas Teste de Integração",
+                    cpfTeste,
+                    emailTeste,
+                    "$2a$12$e8Yh9Zf5G7k1V2x.8N4M.uO7pW4L5k8J2n6H3k9L1p4Q7r2T8v0W.",
+                    LocalDate.of(1996, 4, 18),
+                    carteira
+            );
+            novoUsuario.setModoInterface(Usuario.ModoInterface.INICIANTE);
+            novoUsuario.setLimiteOperacionalMensal(new BigDecimal("5000.00"));
+            novoUsuario.setKycAprovado(false);
+
+            usuarioDao.inserir(novoUsuario);
+            System.out.println("   [OK] UsuarioDao.inserir() realizado com sucesso! ID_USUARIO gerado: " + novoUsuario.getId());
+
+            System.out.println("\n2. [DML SELECT] Consultando usuário via UsuarioDao.buscarPorId(" + novoUsuario.getId() + ")...");
+            Usuario usuarioConsultado = usuarioDao.buscarPorId(novoUsuario.getId());
+            if (usuarioConsultado != null) {
+                System.out.println("   -> ID: " + usuarioConsultado.getId());
+                System.out.println("   -> Nome Completo: " + usuarioConsultado.getNomeCompleto());
+                System.out.println("   -> CPF: " + usuarioConsultado.getCpf());
+                System.out.println("   -> E-mail: " + usuarioConsultado.getEmail());
+                System.out.println("   -> Data de Nascimento: " + usuarioConsultado.getDataNascimento());
+                System.out.println("   -> Modo de Interface: " + usuarioConsultado.getModoInterface());
+                System.out.println("   -> Limite Operacional: R$ " + usuarioConsultado.getLimiteOperacionalMensal());
+                System.out.println("   -> Status KYC: " + (usuarioConsultado.isKycAprovado() ? "APROVADO" : "PENDENTE"));
+                System.out.println("   -> Carteira ID: " + usuarioConsultado.getCarteira().getId() + " (Saldo: R$ " + usuarioConsultado.getCarteira().getSaldoDisponivelBrl() + ")");
+            } else {
+                System.out.println("   [FALHA] Registro não encontrado no banco de dados.");
+            }
+
+            System.out.println("\n3. [DML UPDATE] Alterando atributos da instância e chamando UsuarioDao.atualizar()...");
+            usuarioConsultado.setNomeCompleto("Lucas Teste Atualizado Silva");
+            usuarioConsultado.setModoInterface(Usuario.ModoInterface.AVANCADO);
+            usuarioConsultado.aprovarKyc(new BigDecimal("30000.00"));
+            usuarioConsultado.setEmail("lucas.atualizado." + System.currentTimeMillis() + "@aurumbank.com");
+
+            usuarioDao.atualizar(usuarioConsultado);
+            System.out.println("   [OK] UsuarioDao.atualizar() executado!");
+
+            System.out.println("   Reconsultando usuário do banco para provar a persistência do UPDATE:");
+            Usuario usuarioAtualizado = usuarioDao.buscarPorId(usuarioConsultado.getId());
+            System.out.println("   -> Novo Nome: " + usuarioAtualizado.getNomeCompleto());
+            System.out.println("   -> Novo E-mail: " + usuarioAtualizado.getEmail());
+            System.out.println("   -> Novo Modo de Interface: " + usuarioAtualizado.getModoInterface());
+            System.out.println("   -> Novo Limite Mensal: R$ " + usuarioAtualizado.getLimiteOperacionalMensal());
+            System.out.println("   -> Novo Status KYC: " + (usuarioAtualizado.isKycAprovado() ? "APROVADO" : "PENDENTE"));
+
+            System.out.println("\n4. [DML DELETE] Excluindo o usuário via UsuarioDao.excluir(" + usuarioAtualizado.getId() + ")...");
+            usuarioDao.excluir(usuarioAtualizado.getId());
+            System.out.println("   [OK] UsuarioDao.excluir() executado com sucesso!");
+
+            System.out.println("   Listando todos os usuários restantes via UsuarioDao.listarTodos() para confirmar a remoção:");
+            List<Usuario> listaRestante = usuarioDao.listarTodos();
+            boolean usuarioAindaExiste = listaRestante.stream().anyMatch(u -> u.getId().equals(usuarioAtualizado.getId()));
+            System.out.println("   -> Total de usuários restantes na base: " + listaRestante.size());
+            System.out.println("   -> Usuário excluído (ID " + usuarioAtualizado.getId() + ") ainda presente na lista? " + (usuarioAindaExiste ? "SIM (Erro)" : "NÃO (Removido com sucesso!)"));
+
+            // Limpeza da carteira criada para teste
+            carteiraDao.excluir(carteira.getId());
+
+        } catch (java.sql.SQLException e) {
+            System.out.println("   [INFO BD] Operação JDBC: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("   [ERRO] Falha durante teste de integração: " + e.getMessage());
         }
     }
 }
