@@ -246,3 +246,86 @@ CREATE TABLE TB_PROGRESSO_AULA (
         REFERENCES TB_AULA (ID_AULA),
     CONSTRAINT CK_PROGRESSO_CONCLUIDA CHECK (FL_CONCLUIDA IN ('S', 'N'))
 );
+
+-- ----------------------------------------------------------------------------
+-- 3. EVOLUÇÃO DO MODELO (ALTER TABLE)
+--
+-- Ajustes de integridade aplicados após a criação das tabelas, decorrentes da
+-- auditoria entre o modelo relacional e as classes de domínio Java da Fase 4.
+-- Cada comando abaixo corrige uma divergência real entre o MER e o código.
+-- ----------------------------------------------------------------------------
+
+-- 3.1 GOVERNANÇA: registro do motivo de rejeição em solicitações multi-assinatura
+-- A classe SolicitacaoDeTransacao acumula em 'motivoRejeicao' as justificativas
+-- informadas pelos guardiões ao reprovar uma operação. Sem esta coluna, a trilha
+-- de auditoria da governança corporativa se perdia na persistência.
+ALTER TABLE TB_SOLICITACAO_TRANSACAO
+    ADD DS_MOTIVO_REJEICAO VARCHAR2(500);
+
+-- 3.2 GOVERNANÇA: inclusão do status CANCELADA no domínio de solicitações
+-- O enum StatusSolicitacao possui cinco estados (PENDENTE, APROVADA, REJEITADA,
+-- EXPIRADA e CANCELADA), mas a restrição original aceitava apenas quatro,
+-- tornando impossível persistir uma solicitação cancelada pelo usuário master.
+ALTER TABLE TB_SOLICITACAO_TRANSACAO
+    DROP CONSTRAINT CK_SOLICITACAO_STATUS;
+
+ALTER TABLE TB_SOLICITACAO_TRANSACAO
+    ADD CONSTRAINT CK_SOLICITACAO_STATUS CHECK (ST_SOLICITACAO IN (
+        'PENDENTE', 'APROVADA', 'REJEITADA', 'EXPIRADA', 'CANCELADA'
+    ));
+
+-- 3.3 PRODUTOS: materialização do atributo herdado de ProdutoAurum
+-- CofreTemporal estende a classe abstrata ProdutoAurum, que controla a flag
+-- 'disponivel' via validarDisponibilidade(). O atributo da superclasse não
+-- possuía representação relacional na tabela da subclasse.
+ALTER TABLE TB_COFRE_TEMPORAL
+    ADD FL_DISPONIVEL CHAR(1) DEFAULT 'S' NOT NULL;
+
+ALTER TABLE TB_COFRE_TEMPORAL
+    ADD CONSTRAINT CK_COFRE_DISPONIVEL CHECK (FL_DISPONIVEL IN ('S', 'N'));
+
+-- 3.4 EDUCAÇÃO: precisão temporal na conclusão de aulas
+-- ProgressoUsuarioAula registra a conclusão em LocalDateTime. O tipo DATE não
+-- comporta a precisão de fração de segundo da classe Java, o que impedia a
+-- reconstrução fiel do objeto na leitura.
+ALTER TABLE TB_PROGRESSO_AULA
+    MODIFY DT_CONCLUSAO TIMESTAMP;
+
+-- 3.5 COMPLIANCE: teto operacional para usuários sem KYC aprovado
+-- Espelha a regra de Usuario.validarLimiteOperacional(): enquanto o KYC não for
+-- aprovado, o limite mensal não pode ultrapassar R$ 5.000,00. A regra existia
+-- apenas na camada Java e podia ser burlada por DML direto no banco.
+ALTER TABLE TB_USUARIO
+    ADD CONSTRAINT CK_USUARIO_LIMITE_SEM_KYC CHECK (
+        FL_KYC_APROVADO = 'S' OR VL_LIMITE_MENSAL <= 5000.00
+    );
+
+-- 3.6 CADASTRO: normalização do CPF armazenado
+-- Usuario.validarCpf() remove a máscara e exige exatamente 11 dígitos. A coluna
+-- VARCHAR2(14) permitia gravar '123.456.789-01' e '12345678901' como registros
+-- distintos, furando a chave única UK_USUARIO_CPF.
+ALTER TABLE TB_USUARIO
+    MODIFY NR_CPF VARCHAR2(11);
+
+ALTER TABLE TB_USUARIO
+    ADD CONSTRAINT CK_USUARIO_CPF_FORMATO CHECK (REGEXP_LIKE(NR_CPF, '^[0-9]{11}$'));
+
+-- 3.7 CATÁLOGO: normalização da sigla do criptoativo
+-- A classe Criptoativo aplica toUpperCase() na sigla. Sem esta restrição, 'btc'
+-- e 'BTC' seriam aceitos como ativos diferentes pela UK_CRIPTOATIVO_SIGLA.
+ALTER TABLE TB_CRIPTOATIVO
+    ADD CONSTRAINT CK_CRIPTO_SIGLA_MAIUSCULA CHECK (CD_SIGLA = UPPER(CD_SIGLA));
+
+-- 3.8 LIVRO-RAZÃO: coerência entre tipo de transação e ativo envolvido
+-- Transacao aceita moedaEnvolvida nula por design (operações em moeda fiduciária),
+-- mas negociação de criptoativo sem ativo vinculado corrompe a auditoria.
+-- As duas restrições abaixo delimitam os dois casos.
+ALTER TABLE TB_TRANSACAO
+    ADD CONSTRAINT CK_TRANSACAO_CRIPTO_NEGOCIACAO CHECK (
+        TP_TRANSACAO NOT IN ('COMPRA', 'VENDA') OR ID_CRIPTOATIVO IS NOT NULL
+    );
+
+ALTER TABLE TB_TRANSACAO
+    ADD CONSTRAINT CK_TRANSACAO_CRIPTO_FIAT CHECK (
+        TP_TRANSACAO NOT IN ('DEPOSITO_FIAT', 'SAQUE_FIAT') OR ID_CRIPTOATIVO IS NULL
+    );
