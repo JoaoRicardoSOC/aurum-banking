@@ -28,3 +28,11 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+### Maven ###
+target/
+
+### Artefatos gerados em runtime ###
+dados_exportados.txt
+
+### Driver JDBC local (agora resolvido via dependencia Maven) ###
+lib/
