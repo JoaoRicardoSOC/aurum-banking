@@ -1,0 +1,7 @@
+--- Relatorio de Usuarios ---
+ID: 1, Nome: Usuário Base, CPF: 12345678901, E-mail: base@email.com
+ID: 2, Nome: Usuário Base 2, CPF: 98765432100, E-mail: base2@email.com
+
+--- Relatorio de Criptoativos ---
+ID: 1, Nome: Bitcoin, Sigla: BTC, Preco Atual: R$ 350000
+ID: 2, Nome: Ethereum, Sigla: ETH, Preco Atual: R$ 15000

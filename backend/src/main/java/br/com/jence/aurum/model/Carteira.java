@@ -90,8 +90,8 @@ public class Carteira {
 
     public BigDecimal getSaldoDisponivelBrl() { return saldoDisponivelBrl; }
 
-    private void setSaldoDisponivelBrl(BigDecimal saldoDisponivelBrl) {
-        this.saldoDisponivelBrl = saldoDisponivelBrl;
+    public void setSaldoDisponivelBrl(BigDecimal saldoDisponivelBrl) {
+        this.saldoDisponivelBrl = saldoDisponivelBrl != null ? saldoDisponivelBrl : BigDecimal.ZERO;
     }
 
     public List<PosicaoCripto> getAtivosAdquiridos() {

@@ -15,8 +15,9 @@ import java.util.List;
  * Data Access Object (DAO) para a entidade Carteira.
  * Gerencia as operações na tabela TB_CARTEIRA do Oracle Database.
  */
-public class CarteiraDao {
+public class CarteiraDao implements Dao<Carteira, Long> {
 
+    @Override
     public void inserir(Carteira carteira) throws SQLException {
         String sql = "INSERT INTO TB_CARTEIRA (DS_ENDERECO_DIGITAL, VL_SALDO_DISPONIVEL_BRL) VALUES (?, ?)";
 
@@ -42,7 +43,58 @@ public class CarteiraDao {
         }
     }
 
-    public Carteira buscarPorId(long id) throws SQLException {
+    @Override
+    public void atualizar(Carteira carteira) throws SQLException {
+        String sql = "UPDATE TB_CARTEIRA SET DS_ENDERECO_DIGITAL = ?, VL_SALDO_DISPONIVEL_BRL = ? WHERE ID_CARTEIRA = ?";
+
+        Connection conn = null;
+        PreparedStatement stmt = null;
+
+        try {
+            conn = ConnectionFactory.getConnection();
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, carteira.getEnderecoDigital());
+            stmt.setBigDecimal(2, carteira.getSaldoDisponivelBrl() != null ? carteira.getSaldoDisponivelBrl() : BigDecimal.ZERO);
+            stmt.setLong(3, carteira.getId());
+            int rows = stmt.executeUpdate();
+            if (rows == 0) {
+                throw new SQLException("Nenhuma carteira encontrada para atualização com ID: " + carteira.getId());
+            }
+        } finally {
+            ConnectionFactory.close(conn, stmt);
+        }
+    }
+
+    public void atualizarSaldo(Carteira carteira) throws SQLException {
+        atualizar(carteira);
+    }
+
+    @Override
+    public void excluir(Long id) throws SQLException {
+        String sql = "DELETE FROM TB_CARTEIRA WHERE ID_CARTEIRA = ?";
+
+        Connection conn = null;
+        PreparedStatement stmt = null;
+
+        try {
+            conn = ConnectionFactory.getConnection();
+            stmt = conn.prepareStatement(sql);
+            stmt.setLong(1, id);
+            int rows = stmt.executeUpdate();
+            if (rows == 0) {
+                throw new SQLException("Nenhuma carteira encontrada para exclusão com ID: " + id);
+            }
+        } finally {
+            ConnectionFactory.close(conn, stmt);
+        }
+    }
+
+    public void excluir(long id) throws SQLException {
+        excluir(Long.valueOf(id));
+    }
+
+    @Override
+    public Carteira buscarPorId(Long id) throws SQLException {
         String sql = "SELECT ID_CARTEIRA, DS_ENDERECO_DIGITAL, VL_SALDO_DISPONIVEL_BRL FROM TB_CARTEIRA WHERE ID_CARTEIRA = ?";
 
         Connection conn = null;
@@ -61,9 +113,7 @@ public class CarteiraDao {
                 BigDecimal saldo = rs.getBigDecimal("VL_SALDO_DISPONIVEL_BRL");
 
                 Carteira carteira = new Carteira(idCarteira, endereco);
-                if (saldo != null && saldo.compareTo(BigDecimal.ZERO) > 0) {
-                    carteira.depositarBrl(saldo);
-                }
+                carteira.setSaldoDisponivelBrl(saldo);
                 return carteira;
             }
             return null;
@@ -72,40 +122,12 @@ public class CarteiraDao {
         }
     }
 
-    public void atualizarSaldo(Carteira carteira) throws SQLException {
-        String sql = "UPDATE TB_CARTEIRA SET VL_SALDO_DISPONIVEL_BRL = ? WHERE ID_CARTEIRA = ?";
-
-        Connection conn = null;
-        PreparedStatement stmt = null;
-
-        try {
-            conn = ConnectionFactory.getConnection();
-            stmt = conn.prepareStatement(sql);
-            stmt.setBigDecimal(1, carteira.getSaldoDisponivelBrl());
-            stmt.setLong(2, carteira.getId());
-            stmt.executeUpdate();
-        } finally {
-            ConnectionFactory.close(conn, stmt);
-        }
+    public Carteira buscarPorId(long id) throws SQLException {
+        return buscarPorId(Long.valueOf(id));
     }
 
-    public void excluir(long id) throws SQLException {
-        String sql = "DELETE FROM TB_CARTEIRA WHERE ID_CARTEIRA = ?";
-
-        Connection conn = null;
-        PreparedStatement stmt = null;
-
-        try {
-            conn = ConnectionFactory.getConnection();
-            stmt = conn.prepareStatement(sql);
-            stmt.setLong(1, id);
-            stmt.executeUpdate();
-        } finally {
-            ConnectionFactory.close(conn, stmt);
-        }
-    }
-
-    public List<Carteira> listarTodas() throws SQLException {
+    @Override
+    public List<Carteira> listarTodos() throws SQLException {
         String sql = "SELECT ID_CARTEIRA, DS_ENDERECO_DIGITAL, VL_SALDO_DISPONIVEL_BRL FROM TB_CARTEIRA ORDER BY ID_CARTEIRA";
 
         Connection conn = null;
@@ -124,14 +146,16 @@ public class CarteiraDao {
                 BigDecimal saldo = rs.getBigDecimal("VL_SALDO_DISPONIVEL_BRL");
 
                 Carteira c = new Carteira(idCarteira, endereco);
-                if (saldo != null && saldo.compareTo(BigDecimal.ZERO) > 0) {
-                    c.depositarBrl(saldo);
-                }
+                c.setSaldoDisponivelBrl(saldo);
                 carteiras.add(c);
             }
             return carteiras;
         } finally {
             ConnectionFactory.close(conn, stmt, rs);
         }
+    }
+
+    public List<Carteira> listarTodas() throws SQLException {
+        return listarTodos();
     }
 }

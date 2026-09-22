@@ -5,12 +5,18 @@ import java.util.Objects;
 
 public class PosicaoCripto {
     
-    private Long id; 
+    private Long id;
+    private Long idCarteira;
     private Criptoativo moeda;
     private BigDecimal quantidadeTotal;
 
     public PosicaoCripto(Long id, Criptoativo moeda, BigDecimal quantidadeInicial) {
+        this(id, null, moeda, quantidadeInicial);
+    }
+
+    public PosicaoCripto(Long id, Long idCarteira, Criptoativo moeda, BigDecimal quantidadeInicial) {
         this.id = Objects.requireNonNull(id);
+        this.idCarteira = idCarteira;
         this.moeda = Objects.requireNonNull(moeda);
         this.quantidadeTotal = quantidadeInicial != null ? quantidadeInicial : BigDecimal.ZERO;
     }
@@ -28,6 +34,9 @@ public class PosicaoCripto {
   
     public Long getId() { return id; }
     public void setId(Long id) { this.id = Objects.requireNonNull(id); }
+
+    public Long getIdCarteira() { return idCarteira; }
+    public void setIdCarteira(Long idCarteira) { this.idCarteira = idCarteira; }
 
     public Criptoativo getMoeda() { return moeda; }
     public void setMoeda(Criptoativo moeda) { 

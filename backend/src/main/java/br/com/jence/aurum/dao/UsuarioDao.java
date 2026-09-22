@@ -20,7 +20,7 @@ import java.util.List;
  * Data Access Object (DAO) para a entidade Usuario.
  * Gerencia as operações CRUD na tabela TB_USUARIO do Oracle Database.
  */
-public class UsuarioDao {
+public class UsuarioDao implements Dao<Usuario, Long> {
 
     /**
      * DML INSERT: Insere um novo usuário na tabela TB_USUARIO via PreparedStatement.
@@ -123,6 +123,11 @@ public class UsuarioDao {
         }
     }
 
+    @Override
+    public void excluir(Long id) throws SQLException {
+        excluir(id.longValue());
+    }
+
     /**
      * DML DELETE: Remove um usuário pelo seu ID (long).
      *
@@ -157,6 +162,11 @@ public class UsuarioDao {
      */
     public void excluir(int id) throws SQLException {
         excluir((long) id);
+    }
+
+    @Override
+    public Usuario buscarPorId(Long id) throws SQLException {
+        return buscarPorId(id.longValue());
     }
 
     /**

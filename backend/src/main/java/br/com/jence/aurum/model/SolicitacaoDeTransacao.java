@@ -9,6 +9,7 @@ import java.util.Objects;
 public class SolicitacaoDeTransacao implements RegistroAuditavel {
 
     private Long id;
+    private Empresa empresa;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataExpiracao;
     private Transacao transacaoPendente;
@@ -19,7 +20,12 @@ public class SolicitacaoDeTransacao implements RegistroAuditavel {
     private String motivoRejeicao;
 
     public SolicitacaoDeTransacao(Long id, Transacao transacao, int quorum, LocalDateTime expiracao) {
+        this(id, null, transacao, quorum, expiracao);
+    }
+
+    public SolicitacaoDeTransacao(Long id, Empresa empresa, Transacao transacao, int quorum, LocalDateTime expiracao) {
         this.id = Objects.requireNonNull(id);
+        this.empresa = empresa;
         this.dataCriacao = LocalDateTime.now();
         this.transacaoPendente = Objects.requireNonNull(transacao);
         this.minimoAprovacoesNecessarias = validarQuorum(quorum);
@@ -89,9 +95,12 @@ public class SolicitacaoDeTransacao implements RegistroAuditavel {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = Objects.requireNonNull(id); }
 
+    public Empresa getEmpresa() { return empresa; }
+    public void setEmpresa(Empresa empresa) { this.empresa = empresa; }
+
     public LocalDateTime getDataCriacao() { return dataCriacao; }
 
-    private void setDataCriacao(LocalDateTime dataCriacao) {
+    public void setDataCriacao(LocalDateTime dataCriacao) {
         this.dataCriacao = dataCriacao;
     }
 

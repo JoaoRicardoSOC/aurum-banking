@@ -10,6 +10,7 @@ public class Empresa extends ClienteBank {
 
     private String razaoSocial;
     private String cnpj;
+    private String emailCorporativo;
     private LocalDate dataCadastro;
     private boolean statusAtivo;
     private Usuario usuarioMaster;
@@ -17,11 +18,16 @@ public class Empresa extends ClienteBank {
     private List<RelatorioFiscal> historicoRelatorios;
 
     public Empresa(Long id, String razaoSocial, String cnpj, Usuario master, Carteira carteira) {
+        this(id, razaoSocial, cnpj, "contato@" + Objects.requireNonNull(cnpj).replaceAll("\\D", "") + ".corp", master, carteira);
+    }
+
+    public Empresa(Long id, String razaoSocial, String cnpj, String emailCorporativo, Usuario master, Carteira carteira) {
         // 1. Herança: Inicializa ID e Carteira na Superclasse ClienteBank
         super(id, carteira);
 
         this.razaoSocial = Objects.requireNonNull(razaoSocial, "Razão social é obrigatória.");
         this.cnpj = validarCnpj(cnpj);
+        this.emailCorporativo = validarEmail(emailCorporativo);
         this.usuarioMaster = Objects.requireNonNull(master, "Usuário master é obrigatório.");
         this.dataCadastro = LocalDate.now();
         this.statusAtivo = true;
@@ -70,6 +76,13 @@ public class Empresa extends ClienteBank {
         return cleaned;
     }
 
+    private String validarEmail(String email) {
+        if (email == null || !email.contains("@") || !email.contains(".")) {
+            throw new IllegalArgumentException("E-mail corporativo inválido.");
+        }
+        return email.trim().toLowerCase();
+    }
+
     // --- GETTERS E SETTERS BLINDADOS (FASE 3) ---
 
     public String getRazaoSocial() { return razaoSocial; }
@@ -80,6 +93,11 @@ public class Empresa extends ClienteBank {
     public String getCnpj() { return cnpj; }
     public void setCnpj(String cnpj) {
         this.cnpj = validarCnpj(cnpj);
+    }
+
+    public String getEmailCorporativo() { return emailCorporativo; }
+    public void setEmailCorporativo(String emailCorporativo) {
+        this.emailCorporativo = validarEmail(emailCorporativo);
     }
 
     public LocalDate getDataCadastro() { return dataCadastro; }

@@ -76,7 +76,7 @@ public class Transacao implements RegistroAuditavel {
 
     public LocalDateTime getDataHora() { return dataHora; }
 
-    private void setDataHora(LocalDateTime dataHora) {
+    public void setDataHora(LocalDateTime dataHora) {
         this.dataHora = dataHora;
     }
 

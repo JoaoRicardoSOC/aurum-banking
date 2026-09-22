@@ -1,7 +1,6 @@
 import br.com.jence.aurum.model.*;
 import br.com.jence.aurum.service.TransacaoService;
-import br.com.jence.aurum.dao.UsuarioDao;
-import br.com.jence.aurum.dao.CarteiraDao;
+import br.com.jence.aurum.dao.*;
 import br.com.jence.aurum.factory.ConnectionFactory;
 
 import java.io.BufferedWriter;
@@ -1652,94 +1651,378 @@ public class Main {
     }
 
     // =========================================================================
-    // TESTES DE INTEGRAÇÃO JDBC / DAO (ETAPA 4 - CRUD USUARIO)
+    // TESTES DE INTEGRAÇÃO JDBC / DAO (FASE 6 - CRUD COMPLETO EM TODAS AS 11 TABELAS)
     // =========================================================================
 
     private static void testarIntegracaoDatabaseJdbc() {
-        System.out.println("\n--- testarIntegracaoDatabaseJdbc (CRUD Usuario via UsuarioDao) ---");
+        System.out.println("\n===============================================================================");
+        System.out.println("  🏛️  INICIANDO SUÍTE DE INTEGRAÇÃO JDBC / DAO COM BANCO DE DADOS ORACLE FIAP");
+        System.out.println("===============================================================================");
 
-        UsuarioDao usuarioDao = new UsuarioDao();
         CarteiraDao carteiraDao = new CarteiraDao();
+        UsuarioDao usuarioDao = new UsuarioDao();
+        EmpresaDao empresaDao = new EmpresaDao();
+        CriptoativoDao criptoativoDao = new CriptoativoDao();
+        PosicaoCriptoDao posicaoCriptoDao = new PosicaoCriptoDao();
+        TransacaoDao transacaoDao = new TransacaoDao();
+        CofreTemporalDao cofreTemporalDao = new CofreTemporalDao();
+        GuardiaoDao guardiaoDao = new GuardiaoDao();
+        SolicitacaoTransacaoDao solicitacaoDao = new SolicitacaoTransacaoDao();
+        AulaDao aulaDao = new AulaDao();
+        ProgressoUsuarioAulaDao progressoDao = new ProgressoUsuarioAulaDao();
+
+        // Referências das entidades que serão criadas para o ciclo de vida e teardown
+        Carteira carteiraUser = null;
+        Carteira carteiraCorp = null;
+        Carteira carteiraGuardiao = null;
+        Usuario usuarioMaster = null;
+        Usuario usuarioGuardiao = null;
+        Empresa empresa = null;
+        Criptoativo cripto = null;
+        PosicaoCripto posicao = null;
+        Transacao transacao = null;
+        CofreTemporal cofre = null;
+        Guardiao guardiao = null;
+        SolicitacaoDeTransacao solicitacao = null;
+        Aula aula = null;
+        ProgressoUsuarioAula progresso = null;
 
         try {
-            System.out.println("\n1. [DML INSERT] Instanciando novo Usuario e chamando UsuarioDao.inserir()...");
-            
-            // Cria e persiste a carteira vinculada
-            String enderecoCarteira = "0xTEST_" + System.currentTimeMillis();
-            Carteira carteira = new Carteira(System.currentTimeMillis(), enderecoCarteira);
-            carteira.depositarBrl(new BigDecimal("2500.00"));
-            carteiraDao.inserir(carteira);
-            System.out.println("   -> Carteira persistida com sucesso! ID: " + carteira.getId() + " | Endereço: " + carteira.getEnderecoDigital());
+            long sufixo = System.currentTimeMillis();
 
-            // Cria o usuário
-            String cpfTeste = String.format("%011d", (long) (Math.random() * 100000000000L));
-            String emailTeste = "usuario.teste." + System.currentTimeMillis() + "@aurumbank.com";
-            Usuario novoUsuario = new Usuario(
+            // -----------------------------------------------------------------
+            // 1. TB_CARTEIRA (CarteiraDao)
+            // -----------------------------------------------------------------
+            System.out.println("\n[1/11] 💳 Testando TB_CARTEIRA via CarteiraDao...");
+            carteiraUser = new Carteira(0L, "0xUSER_" + sufixo);
+            carteiraUser.depositarBrl(new BigDecimal("15000.00"));
+            carteiraDao.inserir(carteiraUser);
+            System.out.println("   [INSERT] Carteira criada com sucesso! ID: " + carteiraUser.getId());
+
+            Carteira cConsultada = carteiraDao.buscarPorId(carteiraUser.getId());
+            System.out.println("   [SELECT] Carteira recuperada: Endereço = " + cConsultada.getEnderecoDigital() + " | Saldo = R$ " + cConsultada.getSaldoDisponivelBrl());
+
+            cConsultada.depositarBrl(new BigDecimal("5000.00"));
+            carteiraDao.atualizar(cConsultada);
+            Carteira cAtualizada = carteiraDao.buscarPorId(carteiraUser.getId());
+            System.out.println("   [UPDATE] Saldo atualizado com sucesso! Novo Saldo = R$ " + cAtualizada.getSaldoDisponivelBrl());
+
+            List<Carteira> carteiras = carteiraDao.listarTodos();
+            System.out.println("   [COLLECTION] Total de carteiras na base: " + carteiras.size() + " (ArrayList)");
+
+            // -----------------------------------------------------------------
+            // 2. TB_USUARIO (UsuarioDao)
+            // -----------------------------------------------------------------
+            System.out.println("\n[2/11] 👤 Testando TB_USUARIO via UsuarioDao...");
+            String cpfUser = String.format("%011d", (long) (Math.abs(System.nanoTime() % 100000000000L)));
+            usuarioMaster = new Usuario(
                     0L,
-                    "Lucas Teste de Integração",
-                    cpfTeste,
-                    emailTeste,
-                    "$2a$12$e8Yh9Zf5G7k1V2x.8N4M.uO7pW4L5k8J2n6H3k9L1p4Q7r2T8v0W.",
-                    LocalDate.of(1996, 4, 18),
-                    carteira
+                    "Eduardo Silva Teste",
+                    cpfUser,
+                    "eduardo." + sufixo + "@aurumbank.com",
+                    "$2a$12$e8Yh9Zf5G7k1V2x.hashSeguroSimulado1234567890",
+                    LocalDate.of(1995, 8, 20),
+                    carteiraUser
             );
-            novoUsuario.setModoInterface(Usuario.ModoInterface.INICIANTE);
-            novoUsuario.setLimiteOperacionalMensal(new BigDecimal("5000.00"));
-            novoUsuario.setKycAprovado(false);
+            usuarioMaster.setModoInterface(Usuario.ModoInterface.INICIANTE);
+            usuarioMaster.setLimiteOperacionalMensal(new BigDecimal("4500.00"));
+            usuarioMaster.setKycAprovado(false);
+            usuarioDao.inserir(usuarioMaster);
+            System.out.println("   [INSERT] Usuário criado com sucesso! ID: " + usuarioMaster.getId());
 
-            usuarioDao.inserir(novoUsuario);
-            System.out.println("   [OK] UsuarioDao.inserir() realizado com sucesso! ID_USUARIO gerado: " + novoUsuario.getId());
+            Usuario uConsultado = usuarioDao.buscarPorId(usuarioMaster.getId());
+            System.out.println("   [SELECT] Usuário recuperado: Nome = " + uConsultado.getNomeCompleto() + " | CPF = " + uConsultado.getCpf());
 
-            System.out.println("\n2. [DML SELECT] Consultando usuário via UsuarioDao.buscarPorId(" + novoUsuario.getId() + ")...");
-            Usuario usuarioConsultado = usuarioDao.buscarPorId(novoUsuario.getId());
-            if (usuarioConsultado != null) {
-                System.out.println("   -> ID: " + usuarioConsultado.getId());
-                System.out.println("   -> Nome Completo: " + usuarioConsultado.getNomeCompleto());
-                System.out.println("   -> CPF: " + usuarioConsultado.getCpf());
-                System.out.println("   -> E-mail: " + usuarioConsultado.getEmail());
-                System.out.println("   -> Data de Nascimento: " + usuarioConsultado.getDataNascimento());
-                System.out.println("   -> Modo de Interface: " + usuarioConsultado.getModoInterface());
-                System.out.println("   -> Limite Operacional: R$ " + usuarioConsultado.getLimiteOperacionalMensal());
-                System.out.println("   -> Status KYC: " + (usuarioConsultado.isKycAprovado() ? "APROVADO" : "PENDENTE"));
-                System.out.println("   -> Carteira ID: " + usuarioConsultado.getCarteira().getId() + " (Saldo: R$ " + usuarioConsultado.getCarteira().getSaldoDisponivelBrl() + ")");
-            } else {
-                System.out.println("   [FALHA] Registro não encontrado no banco de dados.");
-            }
+            uConsultado.setNomeCompleto("Eduardo Silva Teste Atualizado");
+            uConsultado.aprovarKyc(new BigDecimal("25000.00"));
+            usuarioDao.atualizar(uConsultado);
+            Usuario uAtualizado = usuarioDao.buscarPorId(usuarioMaster.getId());
+            System.out.println("   [UPDATE] Usuário atualizado! Nome = " + uAtualizado.getNomeCompleto() + " | Limite = R$ " + uAtualizado.getLimiteOperacionalMensal());
 
-            System.out.println("\n3. [DML UPDATE] Alterando atributos da instância e chamando UsuarioDao.atualizar()...");
-            usuarioConsultado.setNomeCompleto("Lucas Teste Atualizado Silva");
-            usuarioConsultado.setModoInterface(Usuario.ModoInterface.AVANCADO);
-            usuarioConsultado.aprovarKyc(new BigDecimal("30000.00"));
-            usuarioConsultado.setEmail("lucas.atualizado." + System.currentTimeMillis() + "@aurumbank.com");
+            List<Usuario> usuarios = usuarioDao.listarTodos();
+            System.out.println("   [COLLECTION] Total de usuários na base: " + usuarios.size() + " (ArrayList)");
 
-            usuarioDao.atualizar(usuarioConsultado);
-            System.out.println("   [OK] UsuarioDao.atualizar() executado!");
+            // -----------------------------------------------------------------
+            // 3. TB_EMPRESA (EmpresaDao)
+            // -----------------------------------------------------------------
+            System.out.println("\n[3/11] 🏢 Testando TB_EMPRESA via EmpresaDao...");
+            carteiraCorp = new Carteira(0L, "0xCORP_" + sufixo);
+            carteiraCorp.depositarBrl(new BigDecimal("100000.00"));
+            carteiraDao.inserir(carteiraCorp);
 
-            System.out.println("   Reconsultando usuário do banco para provar a persistência do UPDATE:");
-            Usuario usuarioAtualizado = usuarioDao.buscarPorId(usuarioConsultado.getId());
-            System.out.println("   -> Novo Nome: " + usuarioAtualizado.getNomeCompleto());
-            System.out.println("   -> Novo E-mail: " + usuarioAtualizado.getEmail());
-            System.out.println("   -> Novo Modo de Interface: " + usuarioAtualizado.getModoInterface());
-            System.out.println("   -> Novo Limite Mensal: R$ " + usuarioAtualizado.getLimiteOperacionalMensal());
-            System.out.println("   -> Novo Status KYC: " + (usuarioAtualizado.isKycAprovado() ? "APROVADO" : "PENDENTE"));
+            String cnpjCorp = String.format("%014d", (long) (Math.abs(System.nanoTime() % 100000000000000L)));
+            empresa = new Empresa(
+                    0L,
+                    "Aurum Capital Gestora Ltda",
+                    cnpjCorp,
+                    "diretoria." + sufixo + "@aurumcapital.com.br",
+                    usuarioMaster,
+                    carteiraCorp
+            );
+            empresaDao.inserir(empresa);
+            System.out.println("   [INSERT] Empresa criada com sucesso! ID: " + empresa.getId());
 
-            System.out.println("\n4. [DML DELETE] Excluindo o usuário via UsuarioDao.excluir(" + usuarioAtualizado.getId() + ")...");
-            usuarioDao.excluir(usuarioAtualizado.getId());
-            System.out.println("   [OK] UsuarioDao.excluir() executado com sucesso!");
+            Empresa empConsultada = empresaDao.buscarPorId(empresa.getId());
+            System.out.println("   [SELECT] Empresa recuperada: Razão Social = " + empConsultada.getRazaoSocial() + " | CNPJ = " + empConsultada.getCnpj());
 
-            System.out.println("   Listando todos os usuários restantes via UsuarioDao.listarTodos() para confirmar a remoção:");
-            List<Usuario> listaRestante = usuarioDao.listarTodos();
-            boolean usuarioAindaExiste = listaRestante.stream().anyMatch(u -> u.getId().equals(usuarioAtualizado.getId()));
-            System.out.println("   -> Total de usuários restantes na base: " + listaRestante.size());
-            System.out.println("   -> Usuário excluído (ID " + usuarioAtualizado.getId() + ") ainda presente na lista? " + (usuarioAindaExiste ? "SIM (Erro)" : "NÃO (Removido com sucesso!)"));
+            empConsultada.setRazaoSocial("Aurum Capital Holding S.A.");
+            empresaDao.atualizar(empConsultada);
+            Empresa empAtualizada = empresaDao.buscarPorId(empresa.getId());
+            System.out.println("   [UPDATE] Empresa atualizada: Nova Razão = " + empAtualizada.getRazaoSocial());
 
-            // Limpeza da carteira criada para teste
-            carteiraDao.excluir(carteira.getId());
+            List<Empresa> empresas = empresaDao.listarTodos();
+            System.out.println("   [COLLECTION] Total de empresas cadastradas: " + empresas.size() + " (ArrayList)");
+
+            // -----------------------------------------------------------------
+            // 4. TB_CRIPTOATIVO (CriptoativoDao)
+            // -----------------------------------------------------------------
+            System.out.println("\n[4/11] 🪙 Testando TB_CRIPTOATIVO via CriptoativoDao...");
+            String siglaCripto = "AU" + (int)(Math.random() * 900 + 100);
+            cripto = new Criptoativo(0L, "Aurum Coin Teste", siglaCripto, new BigDecimal("120.5000"));
+            cripto.setLogoUrl("https://aurum.com/assets/" + siglaCripto.toLowerCase() + ".png");
+            criptoativoDao.inserir(cripto);
+            System.out.println("   [INSERT] Criptoativo inserido! ID: " + cripto.getId() + " | Sigla: " + cripto.getSigla());
+
+            Criptoativo crConsultado = criptoativoDao.buscarPorSigla(siglaCripto);
+            System.out.println("   [SELECT] Criptoativo consultado: " + crConsultado.getNome() + " | Cotação = R$ " + crConsultado.getPrecoAtualBrl());
+
+            crConsultado.atualizarPreco(new BigDecimal("135.8000"));
+            criptoativoDao.atualizar(crConsultado);
+            Criptoativo crAtualizado = criptoativoDao.buscarPorId(cripto.getId());
+            System.out.println("   [UPDATE] Preço atualizado! Nova cotação = R$ " + crAtualizado.getPrecoAtualBrl() + " | Variação 24h = " + crAtualizado.getVariacao24h() + "%");
+
+            List<Criptoativo> catalogo = criptoativoDao.listarTodos();
+            System.out.println("   [COLLECTION] Catálogo de criptoativos: " + catalogo.size() + " itens (ArrayList)");
+
+            // -----------------------------------------------------------------
+            // 5. TB_POSICAO_CRIPTO (PosicaoCriptoDao)
+            // -----------------------------------------------------------------
+            System.out.println("\n[5/11] 📊 Testando TB_POSICAO_CRIPTO via PosicaoCriptoDao...");
+            posicao = new PosicaoCripto(0L, carteiraUser.getId(), cripto, new BigDecimal("2.50000000"));
+            posicaoCriptoDao.inserir(posicao);
+            System.out.println("   [INSERT] Posição cripto criada! ID: " + posicao.getId());
+
+            PosicaoCripto posConsultada = posicaoCriptoDao.buscarPorId(posicao.getId());
+            System.out.println("   [SELECT] Posição recuperada: Quantidade = " + posConsultada.getQuantidadeTotal() + " " + posConsultada.getMoeda().getSigla());
+
+            posConsultada.adicionarQuantidade(new BigDecimal("1.25000000"));
+            posicaoCriptoDao.atualizar(posConsultada);
+            PosicaoCripto posAtualizada = posicaoCriptoDao.buscarPorId(posicao.getId());
+            System.out.println("   [UPDATE] Quantidade acumulada atualizada: " + posAtualizada.getQuantidadeTotal());
+
+            List<PosicaoCripto> posicoes = posicaoCriptoDao.listarPorCarteira(carteiraUser.getId());
+            System.out.println("   [COLLECTION] Posições da carteira ID " + carteiraUser.getId() + ": " + posicoes.size() + " (ArrayList)");
+
+            // -----------------------------------------------------------------
+            // 6. TB_TRANSACAO (TransacaoDao)
+            // -----------------------------------------------------------------
+            System.out.println("\n[6/11] 📑 Testando TB_TRANSACAO via TransacaoDao...");
+            transacao = new Transacao(
+                    0L,
+                    Transacao.TipoTransacao.COMPRA,
+                    new BigDecimal("339.50"),
+                    new BigDecimal("2.50000000"),
+                    new BigDecimal("135.8000"),
+                    new BigDecimal("2.00"),
+                    carteiraUser,
+                    cripto
+            );
+            transacaoDao.inserir(transacao);
+            System.out.println("   [INSERT] Transação registrada no livro-razão! ID: " + transacao.getId());
+
+            Transacao trConsultada = transacaoDao.buscarPorId(transacao.getId());
+            System.out.println("   [SELECT] Transação recuperada: Tipo = " + trConsultada.getTipoTransacao() + " | Status = " + trConsultada.getStatus() + " | Valor = R$ " + trConsultada.getValorMovimentadoBrl());
+
+            trConsultada.marcarComoConcluida();
+            transacaoDao.atualizar(trConsultada);
+            Transacao trAtualizada = transacaoDao.buscarPorId(transacao.getId());
+            System.out.println("   [UPDATE] Transação concluída com sucesso! Novo status = " + trAtualizada.getStatus());
+
+            List<Transacao> extrato = transacaoDao.listarPorCarteira(carteiraUser.getId());
+            System.out.println("   [COLLECTION] Extrato da carteira: " + extrato.size() + " transações (ArrayList)");
+
+            // -----------------------------------------------------------------
+            // 7. TB_COFRE_TEMPORAL (CofreTemporalDao)
+            // -----------------------------------------------------------------
+            System.out.println("\n[7/11] 🔒 Testando TB_COFRE_TEMPORAL via CofreTemporalDao...");
+            cofre = new CofreTemporal(
+                    0L,
+                    "Reserva Estratégica 2027",
+                    LocalDate.now().plusDays(60),
+                    new BigDecimal("1.00000000"),
+                    cripto,
+                    carteiraUser
+            );
+            cofreTemporalDao.inserir(cofre);
+            System.out.println("   [INSERT] Cofre temporal criado! ID: " + cofre.getId());
+
+            CofreTemporal cofConsultado = cofreTemporalDao.buscarPorId(cofre.getId());
+            System.out.println("   [SELECT] Cofre recuperado: Objetivo = " + cofConsultado.getNome() + " | Liberação = " + cofConsultado.getDataLiberacao() + " | Status = " + cofConsultado.getStatus());
+
+            cofConsultado.setStatus(CofreTemporal.StatusCofre.CANCELADO);
+            cofreTemporalDao.atualizar(cofConsultado);
+            CofreTemporal cofAtualizado = cofreTemporalDao.buscarPorId(cofre.getId());
+            System.out.println("   [UPDATE] Cofre atualizado! Novo status = " + cofAtualizado.getStatus());
+
+            List<CofreTemporal> cofres = cofreTemporalDao.listarTodos();
+            System.out.println("   [COLLECTION] Total de cofres temporais ativos: " + cofres.size() + " (ArrayList)");
+
+            // -----------------------------------------------------------------
+            // 8. TB_GUARDIAO (GuardiaoDao)
+            // -----------------------------------------------------------------
+            System.out.println("\n[8/11] 🛡️ Testando TB_GUARDIAO via GuardiaoDao...");
+            carteiraGuardiao = new Carteira(0L, "0xGUARD_" + sufixo);
+            carteiraDao.inserir(carteiraGuardiao);
+
+            String cpfGuardiao = String.format("%011d", (long) (Math.abs((System.nanoTime() + 12345) % 100000000000L)));
+            usuarioGuardiao = new Usuario(
+                    0L,
+                    "Dra. Beatriz Guardiã",
+                    cpfGuardiao,
+                    "beatriz." + sufixo + "@aurumconselho.com",
+                    "$2a$12$hashGuardiaoSeguroSimulado1234567890",
+                    LocalDate.of(1988, 3, 12),
+                    carteiraGuardiao
+            );
+            usuarioDao.inserir(usuarioGuardiao);
+
+            guardiao = new Guardiao(0L, usuarioGuardiao, empresa);
+            guardiaoDao.inserir(guardiao);
+            System.out.println("   [INSERT] Guardião corporativo nomeado! ID: " + guardiao.getId());
+
+            Guardiao gConsultado = guardiaoDao.buscarPorId(guardiao.getId());
+            System.out.println("   [SELECT] Guardião consultado: Usuário = " + gConsultado.getUsuarioResponsavel().getNomeCompleto() + " | Ativo = " + gConsultado.isAtivo());
+
+            gConsultado.suspender();
+            guardiaoDao.atualizar(gConsultado);
+            Guardiao gAtualizado = guardiaoDao.buscarPorId(guardiao.getId());
+            System.out.println("   [UPDATE] Status do guardião alterado! Ativo = " + gAtualizado.isAtivo());
+
+            List<Guardiao> conselho = guardiaoDao.listarPorEmpresa(empresa.getId());
+            System.out.println("   [COLLECTION] Conselho de guardiões da empresa: " + conselho.size() + " membros (ArrayList)");
+
+            // -----------------------------------------------------------------
+            // 9. TB_SOLICITACAO_TRANSACAO (SolicitacaoTransacaoDao)
+            // -----------------------------------------------------------------
+            System.out.println("\n[9/11] ✍️ Testando TB_SOLICITACAO_TRANSACAO via SolicitacaoTransacaoDao...");
+            solicitacao = new SolicitacaoDeTransacao(
+                    0L,
+                    empresa,
+                    transacao,
+                    2,
+                    LocalDateTime.now().plusDays(3)
+            );
+            solicitacao.setMotivoRejeicao("Nenhum");
+            solicitacaoDao.inserir(solicitacao);
+            System.out.println("   [INSERT] Solicitação multi-assinatura criada! ID: " + solicitacao.getId());
+
+            SolicitacaoDeTransacao solConsultada = solicitacaoDao.buscarPorId(solicitacao.getId());
+            System.out.println("   [SELECT] Solicitação recuperada: Quórum = " + solConsultada.getMinimoAprovacoesNecessarias() + " | Status = " + solConsultada.getStatus());
+
+            solConsultada.setStatus(SolicitacaoDeTransacao.StatusSolicitacao.APROVADA);
+            solicitacaoDao.atualizar(solConsultada);
+            SolicitacaoDeTransacao solAtualizada = solicitacaoDao.buscarPorId(solicitacao.getId());
+            System.out.println("   [UPDATE] Solicitação atualizada! Novo status = " + solAtualizada.getStatus());
+
+            List<SolicitacaoDeTransacao> solicitacoes = solicitacaoDao.listarTodos();
+            System.out.println("   [COLLECTION] Total de solicitações de governança: " + solicitacoes.size() + " (ArrayList)");
+
+            // -----------------------------------------------------------------
+            // 10. TB_AULA (AulaDao)
+            // -----------------------------------------------------------------
+            System.out.println("\n[10/11] 🎓 Testando TB_AULA via AulaDao...");
+            int ordemAula = (int) (Math.abs(System.nanoTime() % 80000) + 1000);
+            aula = new Aula(
+                    0L,
+                    "Introdução ao Aurum Custody",
+                    "<p>Aprenda como funciona a custódia institucional e o modelo multi-assinatura.</p>",
+                    ordemAula,
+                    150
+            );
+            aulaDao.inserir(aula);
+            System.out.println("   [INSERT] Módulo de aula inserido! ID: " + aula.getId() + " | Ordem: " + aula.getOrdem());
+
+            Aula auConsultada = aulaDao.buscarPorId(aula.getId());
+            System.out.println("   [SELECT] Aula consultada: Título = " + auConsultada.getTitulo() + " | Recompensa = " + auConsultada.getPontosXp() + " XP");
+
+            auConsultada.setTitulo("Introdução ao Aurum Custody Avançado");
+            auConsultada.setPontosXp(200);
+            aulaDao.atualizar(auConsultada);
+            Aula auAtualizada = aulaDao.buscarPorId(aula.getId());
+            System.out.println("   [UPDATE] Aula atualizada! Novo título = " + auAtualizada.getTitulo() + " | XP = " + auAtualizada.getPontosXp());
+
+            List<Aula> trilha = aulaDao.listarTodos();
+            System.out.println("   [COLLECTION] Trilha pedagógica de aulas: " + trilha.size() + " módulos (ArrayList)");
+
+            // -----------------------------------------------------------------
+            // 11. TB_PROGRESSO_AULA (ProgressoUsuarioAulaDao)
+            // -----------------------------------------------------------------
+            System.out.println("\n[11/11] 🏆 Testando TB_PROGRESSO_AULA via ProgressoUsuarioAulaDao...");
+            progresso = new ProgressoUsuarioAula(0L, usuarioMaster, aula);
+            progressoDao.inserir(progresso);
+            System.out.println("   [INSERT] Progresso registrado! ID: " + progresso.getId());
+
+            ProgressoUsuarioAula prConsultado = progressoDao.buscarPorId(progresso.getId());
+            System.out.println("   [SELECT] Progresso consultado: Aluno = " + prConsultado.getAluno().getNomeCompleto() + " | Concluída = " + prConsultado.isConcluida());
+
+            prConsultado.marcarComoConcluida();
+            progressoDao.atualizar(prConsultado);
+            ProgressoUsuarioAula prAtualizado = progressoDao.buscarPorId(progresso.getId());
+            System.out.println("   [UPDATE] Progresso concluído! Status = " + prAtualizado.isConcluida() + " | Data = " + prAtualizado.getDataConclusao());
+
+            List<ProgressoUsuarioAula> progressosUser = progressoDao.listarPorUsuario(usuarioMaster.getId());
+            System.out.println("   [COLLECTION] Histórico de aulas do usuário: " + progressosUser.size() + " registros (ArrayList)");
+
+            // -----------------------------------------------------------------
+            // TEARDOWN: EXCLUSÃO EM ORDEM INVERSA DE DEPENDÊNCIA (INTEGRIDADE REFERENCIAL)
+            // -----------------------------------------------------------------
+            System.out.println("\n🧹 Executando Limpeza Segura (DELETE) em ordem inversa de dependência...");
+
+            progressoDao.excluir(progresso.getId());
+            System.out.println("   [DELETE 11/11] TB_PROGRESSO_AULA ID " + progresso.getId() + " removido.");
+
+            aulaDao.excluir(aula.getId());
+            System.out.println("   [DELETE 10/11] TB_AULA ID " + aula.getId() + " removida.");
+
+            solicitacaoDao.excluir(solicitacao.getId());
+            System.out.println("   [DELETE 9/11] TB_SOLICITACAO_TRANSACAO ID " + solicitacao.getId() + " removida.");
+
+            guardiaoDao.excluir(guardiao.getId());
+            System.out.println("   [DELETE 8/11] TB_GUARDIAO ID " + guardiao.getId() + " removido.");
+
+            usuarioDao.excluir(usuarioGuardiao.getId());
+            carteiraDao.excluir(carteiraGuardiao.getId());
+            System.out.println("   [DELETE 8b/11] Usuário e Carteira de Guardião de teste removidos.");
+
+            cofreTemporalDao.excluir(cofre.getId());
+            System.out.println("   [DELETE 7/11] TB_COFRE_TEMPORAL ID " + cofre.getId() + " removido.");
+
+            transacaoDao.excluir(transacao.getId());
+            System.out.println("   [DELETE 6/11] TB_TRANSACAO ID " + transacao.getId() + " removida.");
+
+            posicaoCriptoDao.excluir(posicao.getId());
+            System.out.println("   [DELETE 5/11] TB_POSICAO_CRIPTO ID " + posicao.getId() + " removida.");
+
+            criptoativoDao.excluir(cripto.getId());
+            System.out.println("   [DELETE 4/11] TB_CRIPTOATIVO ID " + cripto.getId() + " removido.");
+
+            empresaDao.excluir(empresa.getId());
+            carteiraDao.excluir(carteiraCorp.getId());
+            System.out.println("   [DELETE 3/11] TB_EMPRESA ID " + empresa.getId() + " e Carteira Corporativa removidas.");
+
+            usuarioDao.excluir(usuarioMaster.getId());
+            carteiraDao.excluir(carteiraUser.getId());
+            System.out.println("   [DELETE 2/11 e 1/11] TB_USUARIO ID " + usuarioMaster.getId() + " e TB_CARTEIRA ID " + carteiraUser.getId() + " removidos.");
+
+            System.out.println("\n✅ TODAS AS 11 TABELAS FORAM TESTADAS COM SUCESSO NO ORACLE DATABASE (CRUD 100%)!");
 
         } catch (java.sql.SQLException e) {
-            System.out.println("   [INFO BD] Operação JDBC: " + e.getMessage());
+            System.out.println("\n⚠️ [DIAGNÓSTICO JDBC] Operação no banco Oracle não concluída: " + e.getMessage());
+            System.out.println("   Código do Erro Oracle: " + e.getErrorCode());
+            System.out.println("   Nota: Certifique-se de que o acesso à rede da FIAP (VPN/Campus) está ativo para conectar em oracle.fiap.com.br.");
         } catch (Exception e) {
-            System.out.println("   [ERRO] Falha durante teste de integração: " + e.getMessage());
+            System.out.println("\n❌ [ERRO INESPERADO] Falha durante a suíte de integração: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

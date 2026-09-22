@@ -7,19 +7,23 @@ import java.util.List;
 import java.util.Objects;
 
 public class Guardiao {
-    private final Long id;
-    private final LocalDate dataNomeacao;
+    private Long id;
+    private LocalDate dataNomeacao;
     private boolean ativo;
-    private final Usuario usuarioResponsavel;
-    private final Empresa empresaProtegida;
+    private Usuario usuarioResponsavel;
+    private Empresa empresaProtegida;
     private final List<SolicitacaoDeTransacao> historicoAprovacoes;
 
     public Guardiao(Long id, Usuario usuario, Empresa empresa) {
+        this(id, usuario, empresa, LocalDate.now(), true);
+    }
+
+    public Guardiao(Long id, Usuario usuario, Empresa empresa, LocalDate dataNomeacao, boolean ativo) {
         this.id = Objects.requireNonNull(id);
         this.usuarioResponsavel = Objects.requireNonNull(usuario);
         this.empresaProtegida = Objects.requireNonNull(empresa);
-        this.dataNomeacao = LocalDate.now();
-        this.ativo = true;
+        this.dataNomeacao = dataNomeacao != null ? dataNomeacao : LocalDate.now();
+        this.ativo = ativo;
         this.historicoAprovacoes = new ArrayList<>();
     }
 
@@ -58,10 +62,25 @@ public class Guardiao {
     }
 
     public Long getId() { return id; }
+    public void setId(Long id) { this.id = Objects.requireNonNull(id); }
+
     public boolean isAtivo() { return ativo; }
+    public void setAtivo(boolean ativo) { this.ativo = ativo; }
+
     public Usuario getUsuarioResponsavel() { return usuarioResponsavel; }
+    public void setUsuarioResponsavel(Usuario usuarioResponsavel) {
+        this.usuarioResponsavel = Objects.requireNonNull(usuarioResponsavel);
+    }
+
     public Empresa getEmpresaProtegida() { return empresaProtegida; }
+    public void setEmpresaProtegida(Empresa empresaProtegida) {
+        this.empresaProtegida = Objects.requireNonNull(empresaProtegida);
+    }
+
     public LocalDate getDataNomeacao() { return dataNomeacao; }
+    public void setDataNomeacao(LocalDate dataNomeacao) {
+        this.dataNomeacao = Objects.requireNonNull(dataNomeacao);
+    }
 
     @Override
     public boolean equals(Object o) {

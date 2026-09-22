@@ -59,7 +59,7 @@ public class CofreTemporal extends ProdutoAurum {
 
     public LocalDate getDataCriacao() { return dataCriacao; }
 
-    private void setDataCriacao(LocalDate dataCriacao) {
+    public void setDataCriacao(LocalDate dataCriacao) {
         this.dataCriacao = dataCriacao;
     }
 

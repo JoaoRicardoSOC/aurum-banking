@@ -79,13 +79,13 @@ public class Criptoativo {
 
     public BigDecimal getPrecoAtualBrl() { return precoAtualBrl; }
 
-    private void setPrecoAtualBrl(BigDecimal precoAtualBrl) {
+    public void setPrecoAtualBrl(BigDecimal precoAtualBrl) {
         this.precoAtualBrl = precoAtualBrl;
     }
 
     public BigDecimal getVariacao24h() { return variacao24h; }
 
-    private void setVariacao24h(BigDecimal variacao24h) {
+    public void setVariacao24h(BigDecimal variacao24h) {
         this.variacao24h = variacao24h;
     }
 
